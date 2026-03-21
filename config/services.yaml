@@ -1,0 +1,60 @@
+# yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
+
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+# See also https://symfony.com/doc/current/service_container/import.html
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+
+parameters:
+    app_frontend_url: "%env(FRONT_CLIENT_URL)%"
+    max_attempt_per_user: "%env(int:MAX_ATTEMPT_PER_USER)%"
+    max_time_limit_per_user: "%env(int:MAX_TIME_LIMIT_PER_USER)%"
+    max_attempt_per_ip: "%env(int:MAX_ATTEMPT_PER_IP)%"
+    max_time_limit_per_ip: "%env(int:MAX_TIME_LIMIT_PER_IP)%"
+    mailer_from_contact: "%env(MAILER_FROM_CONTACT)%"
+    mailer_from_info: "%env(MAILER_FROM_INFO)%"
+    mailer_from_noreply: "%env(MAILER_FROM_NOREPLY)%"
+    mailer_from_support: "%env(MAILER_FROM_SUPPORT)%"
+    mailer_from_admin: "%env(MAILER_FROM_ADMIN)%"
+    mailer_from_news: "%env(MAILER_FROM_NEWS)%"
+    mailer_api_uri: "%env(MAILER_API_URI)%"
+    mailer_api_token: "%env(MAILER_API_TOKEN)%"
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: "../src/*"
+        exclude: "../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}"
+
+    App\EventListener\ApiExceptionListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+
+    App\Service\Auth\LoggingSecurityService:
+        arguments:
+            $max_attempt_per_user: "%max_attempt_per_user%"
+            $max_time_limit_per_user: "%max_time_limit_per_user%"
+            $max_attempt_per_ip: "%max_attempt_per_ip%"
+            $max_time_limit_per_ip: "%max_time_limit_per_ip%"
+
+    App\Service\Mailer\UserMailerService:
+        arguments:
+            $mailerFromContact: "%mailer_from_contact%"
+            $mailerFromInfo: "%mailer_from_info%"
+            $mailerFromNoReply: "%mailer_from_noreply%"
+            $mailerFromSupport: "%mailer_from_support%"
+            $mailerFromAdmin: "%mailer_from_admin%"
+            $mailerFromNews: "%mailer_from_news%"
+            $mailerApiUri: "%mailer_api_uri%"
+            $mailerApiToken: "%mailer_api_token%"

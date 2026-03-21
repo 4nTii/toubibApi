@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification de votre compte</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background-color: #2d3748;
+            padding: 32px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            font-size: 22px;
+            margin: 0;
+        }
+        .body {
+            padding: 40px 32px;
+            color: #2d3748;
+        }
+        .body p {
+            font-size: 15px;
+            line-height: 1.6;
+            margin: 0 0 16px;
+        }
+        .btn {
+            display: inline-block;
+            margin: 24px 0;
+            padding: 14px 28px;
+            background-color: #38a169;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .notice {
+            font-size: 13px;
+            color: #718096;
+        }
+        .footer {
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Vérification de votre compte</h1>
+        </div>
+        <div class="body">
+            <p>Bonjour {{ user.firstName }} {{ user.lastName }},</p>
+            <p>Merci de vous être inscrit ! Votre compte a bien été créé. Il ne vous reste plus qu'une étape pour commencer à l'utiliser : confirmer votre adresse email.</p>
+            <p>
+                <a href="{{ app_frontend_url }}/verify-account/?user={{ user.id }}&token={{ user.userToken }}" class="btn">
+                    Vérifier mon compte
+                </a>
+            </p>
+            <p class="notice">Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :</p>
+            <p class="notice">{{ app_frontend_url }}/verify-account/?user={{ user.id }}&token={{ user.userToken }}</p>
+            <p class="notice">Si vous n'êtes pas à l'origine de cette inscription, ignorez simplement cet email.</p>
+        </div>
+        <div class="footer">
+            &copy; {{ "now"|date("Y") }} ToubibAPI — Cet email a été envoyé automatiquement, merci de ne pas y répondre.
+        </div>
+    </div>
+</body>
+</html>

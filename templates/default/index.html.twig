@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Configuration de l'application{% endblock %}
+
+{% block body %}
+    <div style="width: 450px; margin: 0 auto;">
+        <h1>Configuration de l'application</h1>
+        <center>
+            <img src="{{ asset('images/toubib.png') }}" alt="Logo" width="100">
+        </center>
+        <ul>
+            <li><strong>Nom de l'app :</strong> {{ config.appName }}</li>
+            <li><strong>Version :</strong> {{ config.version }}</li>
+            <li><strong>Maintenance :</strong> {{ config.maintenance ? 'Oui' : 'Non' }}</li>
+            <li><strong>Dernière mise à jour :</strong> {{ config.updateAt ? config.updateAt|date('d/m/Y H:i:s') : 'Jamais' }}</li>
+        </ul>
+    </div>
+{% endblock %}

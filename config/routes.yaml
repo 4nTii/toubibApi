@@ -1,0 +1,101 @@
+# yaml-language-server: $schema=../vendor/symfony/routing/Loader/schema/routing.schema.json
+
+# This file is the entry point to configure the routes of your app.
+# Methods with the #[Route] attribute are automatically imported.
+# See also https://symfony.com/doc/current/routing.html
+
+# To list all registered routes, run the following command:
+#   bin/console debug:router
+
+# API Main routes
+app_status_api:
+    path: /api/status{slash}
+    controller: App\Controller\AppConfigController::status
+    methods: [GET, POST]
+    requirements:
+        slash: /?
+
+app_api:
+    path: /api{slash}
+    controller: App\Controller\AppConfigController::status
+    methods: [GET, POST]
+    requirements:
+        slash: /?
+
+# Authentification
+app_auth_login:
+    path: /api/auth/login{slash}
+    controller: App\Controller\Auth\AuthController::login
+    methods: POST
+    requirements:
+        slash: /?
+
+app_auth_me:
+    path: /api/auth/me{slash}
+    controller: App\Controller\Auth\AuthController::me
+    methods: GET
+    requirements:
+        slash: /?
+
+app_auth_register:
+    path: /api/auth/register{slash}
+    controller: App\Controller\Auth\AuthController::register
+    methods: POST
+    requirements:
+        slash: /?
+
+app_auth_verify_account:
+    path: /api/auth/verify-account{slash}
+    controller: App\Controller\Auth\AuthController::verifyAccount
+    methods: POST
+    requirements:
+        slash: /?
+
+app_auth_forgot_password:
+    path: /api/auth/forgot-password{slash}
+    controller: App\Controller\Auth\AuthController::forgotPassword
+    methods: POST
+    requirements:
+        slash: /?
+
+app_auth_verify_token:
+    path: /api/auth/check-reset-token{slash}
+    controller: App\Controller\Auth\AuthController::checkResetToken
+    methods: POST
+    requirements:
+        slash: /?
+
+app_auth_reset_password:
+    path: /api/auth/reset-password{slash}
+    controller: App\Controller\Auth\AuthController::resetPassword
+    methods: POST
+    requirements:
+        slash: /?
+
+# Doctors
+app_doctors_getAll:
+    path: /api/doctor{slash}
+    controller: App\Controller\Doctors\DoctorsController::getAllDoctors
+    methods: GET
+    requirements:
+        slash: /?
+
+# CatchAll
+app_catch_all_api:
+    path: /api/doctors/{url}
+    controller: App\Controller\AppConfigController::catchAllApi
+    methods: [GET, POST]
+    requirements:
+        url: ".+"
+
+app_catch_all:
+    path: /{url}
+    controller: App\Controller\AppConfigController::catchAllApi
+    methods: [GET, POST]
+    requirements:
+        url: ".+"
+
+app_default_rout:
+    path: /
+    controller: App\Controller\DefaultController::catchAll
+    methods: GET
