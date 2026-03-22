@@ -156,37 +156,6 @@ class AuthController extends AbstractController
         ], 201);
     }
 
-    public function me(): JsonResponse
-    {
-        /** @var App\Entity\Users $user */
-        $user = $this->getUser();
-
-        if (!$user) {
-            return $this->json([
-                'status' => false,
-                'message' => 'Utilisateur non authentifié'
-            ], 401);
-        }
-        return $this->json([
-            'status' => true,
-            'data' => [
-                'id' => $user->getId(),
-                'role' => $user->getRole(),
-                'email' => $user->getEmail(),
-                'phone' => $user->getPhone(),
-                'firstName' => $user->getFirstName(),
-                'lastName' => $user->getLastName(),
-                'birthDay' => $user->getBirthDay(),
-                'gender' => $user->getGender(),
-                'photo' => $user->getPhoto(),
-                'biography' => $user->getBiography(),
-                'dateInscription' => $user->getDateInscription(),
-                'lastLogin' => $user->getLastLogin(),
-                'isActive' => $user->isActive(),
-            ]
-        ], 200);
-    }
-
     public function verifyAccount(
         HttpFoundationRequest $request,
         UsersRepository $usersRepository,
