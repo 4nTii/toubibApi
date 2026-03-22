@@ -30,13 +30,6 @@ app_auth_login:
     requirements:
         slash: /?
 
-app_auth_me:
-    path: /api/auth/me{slash}
-    controller: App\Controller\Auth\AuthController::me
-    methods: GET
-    requirements:
-        slash: /?
-
 app_auth_register:
     path: /api/auth/register{slash}
     controller: App\Controller\Auth\AuthController::register
@@ -69,6 +62,21 @@ app_auth_reset_password:
     path: /api/auth/reset-password{slash}
     controller: App\Controller\Auth\AuthController::resetPassword
     methods: POST
+    requirements:
+        slash: /?
+
+# User
+app_user_me:
+    path: /api/users/me{slash}
+    controller: App\Controller\User\ProfileController::me
+    methods: GET
+    requirements:
+        slash: /?
+
+app_user_update:
+    path: /api/users/me{slash}
+    controller: App\Controller\User\ProfileController::editProfile
+    methods: PATCH
     requirements:
         slash: /?
 
