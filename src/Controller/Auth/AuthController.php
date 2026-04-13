@@ -145,13 +145,9 @@ class AuthController extends AbstractController
 
         $errors = $validator->validate($user);
         if (count($errors) > 0) {
-            $messages = [];
-            foreach ($errors as $error) {
-                $messages[$error->getPropertyPath()] = $error->getMessage();
-            }
             return $this->json([
-                'status' => false,
-                'message' => $messages
+                'status'  => false,
+                'message' => $errors[0]->getMessage(),
             ], 400);
         }
 
@@ -159,7 +155,7 @@ class AuthController extends AbstractController
         if (!empty($errorsBeforeFlush)) {
             return $this->json([
                 'status' => false,
-                'message' => $errorsBeforeFlush
+                'message' => array_values($errorsBeforeFlush)[0],
             ], 400);
         }
 
