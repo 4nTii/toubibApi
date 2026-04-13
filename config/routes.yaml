@@ -30,6 +30,11 @@ app_auth_login:
     requirements:
         slash: /?
 
+app_auth_logout:
+    path: /api/auth/logout
+    controller: App\Controller\Auth\AuthController::logout
+    methods: POST
+
 app_auth_register:
     path: /api/auth/register{slash}
     controller: App\Controller\Auth\AuthController::register

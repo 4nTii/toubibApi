@@ -10,4 +10,4 @@ lexik_jwt_authentication:
             name: Authorization
         cookie:
             enabled: true
-            name: JWT
+            name: app_auth

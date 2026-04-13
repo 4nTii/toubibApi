@@ -75,7 +75,7 @@ class AuthController extends AbstractController
             ->withValue($token)
             ->withHttpOnly(true)
             ->withSecure(true)
-            ->withSameSite('Lax')
+            ->withSameSite('none')
             ->withPath('/')
             ->withExpires(new \DateTime('+1 hour'));
 
@@ -94,6 +94,22 @@ class AuthController extends AbstractController
 
         $response->headers->setCookie($cookie);
         $response->headers->set('Authorization', 'Bearer ' . $token);
+
+        return $response;
+    }
+
+    public function logout(): JsonResponse
+    {
+        $response = new JsonResponse(['message' => 'Logged out']);
+        $response->headers->setCookie(
+            Cookie::create('app_auth')
+                ->withValue('')
+                ->withExpires(new \DateTime('-1 hour'))
+                ->withPath('/')
+                ->withSecure(true)
+                ->withHttpOnly(true)
+                ->withSameSite('lax')
+        );
 
         return $response;
     }
