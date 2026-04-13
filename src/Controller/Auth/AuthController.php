@@ -19,6 +19,7 @@ use App\Service\Auth\AuthValidatorService;
 use App\Service\Auth\LoggingSecurityService;
 use App\Service\Mailer\UserMailerService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Cookie;
 
 class AuthController extends AbstractController
 {
@@ -31,58 +32,70 @@ class AuthController extends AbstractController
         LoggingAttemptRepository $loggingAttemptRepository,
         LoggingSecurityService $loggingSecurity
     ): JsonResponse {
+        $data         = json_decode($request->getContent(), true);
+        $userAgent    = $request->headers->get('User-Agent');
+        $userIp       = $request->getClientIp();
 
-        $data = json_decode($request->getContent(), true);
-        $userAgent = $request->headers->get('User-Agent');
-        $userIpAddress = $request->getClientIp();
         if (!isset($data['username'], $data['password'])) {
-            $loggingAttempt = new LoggingAttempt(null, $userIpAddress, $userAgent);
-            $loggingAttemptRepository->add($loggingAttempt, true);
+            $loggingAttemptRepository->add(new LoggingAttempt(null, $userIp, $userAgent), true);
             return $this->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Nom d\'utilisateur et mot de passe requis',
             ], 400);
         }
 
-        if (!$loggingSecurity->verifyLoggingAbility($userIpAddress, $data['username'])) {
+        if (!$loggingSecurity->verifyLoggingAbility($userIp, $data['username'])) {
             return $this->json([
-                'status' => false,
-                'message' => 'Trop de tentatives de connexion, Veuillez réessayer plus tard'
+                'status'  => false,
+                'message' => 'Trop de tentatives de connexion, veuillez réessayer plus tard',
             ], 429);
         }
 
         $user = $usersRepository->findByEmail($data['username']);
         if (!$user || !$userPasswordHasher->isPasswordValid($user, $data['password'])) {
-            $loggingAttempt = new LoggingAttempt($user?->getEmail(), $userIpAddress, $userAgent);
-            $loggingAttemptRepository->add($loggingAttempt, true);
+            $loggingAttemptRepository->add(new LoggingAttempt($user?->getEmail(), $userIp, $userAgent), true);
             return $this->json([
-                'status' => false,
-                'message' => 'Identifiants invalides'
+                'status'  => false,
+                'message' => 'Identifiants invalides',
             ], 401);
         }
 
         if (!$user->isActive()) {
             return $this->json([
-                'status' => false,
-                'message' => 'Veuillez vérifier votre compte, un courriel de vérification a été envoyé à votre adresse courriel.'
+                'status'  => false,
+                'message' => 'Veuillez vérifier votre compte, un courriel de vérification a été envoyé à votre adresse courriel.',
             ], 403);
         }
 
+        // Generation du token
         $token = $jwtManager->create($user);
 
+        // Cookie HttpOnly
+        $cookie = Cookie::create('app_auth')
+            ->withValue($token)
+            ->withHttpOnly(true)
+            ->withSecure(true)
+            ->withSameSite('Lax')
+            ->withPath('/')
+            ->withExpires(new \DateTime('+1 hour'));
+
+        // update user + nettoyage logs
         $user->setLastLogin(new \DateTime());
         $entityManger->flush();
 
-        // Nettoyer LoggingAttemt de l'utilisateur
         $loggingAttemptRepository->deleteByEmail($user->getEmail());
-        $loggingAttemptRepository->deleteByIpAddress($userIpAddress);
+        $loggingAttemptRepository->deleteByIpAddress($userIp);
 
-        return $this->json([
+        // cookie + header Authorization
+        $response = $this->json([
             'status' => true,
-            'token' => $token,
-            'email' => $user->getEmail(),
-            200
+            'email'  => $user->getEmail(),
         ]);
+
+        $response->headers->setCookie($cookie);
+        $response->headers->set('Authorization', 'Bearer ' . $token);
+
+        return $response;
     }
 
     public function register(
