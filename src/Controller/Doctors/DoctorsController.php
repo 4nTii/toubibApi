@@ -2,6 +2,7 @@
 
 namespace App\Controller\Doctors;
 
+use App\Entity\Users;
 use App\Repository\DoctorsRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -13,23 +14,58 @@ class DoctorsController extends AbstractController
     {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 5);
-
         $doctors = $doctorsRepository->getAllDoctors($page, $limit);
 
         if (empty($doctors)) {
-            return $this->json([
-                'status' => false,
+            $response = [
+                'status'  => false,
                 'message' => 'Aucun resultat trouvé'
-            ], 200);
+            ];
+            return $this->json($response, 200);
         }
 
-        return $this->json([
+        $response = [
             'status' => true,
             'data'   => [
-                'page'  => $page,
-                'limit' => $limit,
-                'doctors'  => $doctors,
+                'page'    => $page,
+                'limit'   => $limit,
+                'doctors' => $doctors,
             ]
-        ], 200, [], ['groups' => ['doctor:read']]);
+        ];
+
+        return $this->json($response, 200, [], ['groups' => ['doctor:read']]);
+    }
+
+    public function getConnectedDoctor(DoctorsRepository $doctorsRepository): JsonResponse
+    {
+        /** @var Users $user */
+        $user = $this->getUser();
+
+        if (!$user) {
+            $response = [
+                'status'  => false,
+                'message' => 'Utilisateur non authentifié'
+            ];
+            return $this->json($response, 401);
+        }
+
+        $doctor = $doctorsRepository->findOneBy(['user' => $user]);
+
+        if (!$doctor) {
+            $response = [
+                'status'  => false,
+                'message' => 'Cet utilisateur ne correspond pas à un médecin'
+            ];
+            return $this->json($response, 200);
+        }
+
+        $response = [
+            'status' => true,
+            'data'   => [
+                'doctor' => $doctor,
+            ]
+        ];
+
+        return $this->json($response, 200, [], ['groups' => ['doctor:read']]);
     }
 }
