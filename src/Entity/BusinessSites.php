@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Serializer\Attribute\Groups as Groups;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'business_sites')]
@@ -13,34 +14,38 @@ class BusinessSites
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    #[Groups(['doctor:read', 'businesssite:read'])]
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 150)]
-    private string $name; // Nom du cabinet ou centre médical
+    #[Groups(['doctor:read', 'businesssite:read'])]
+    private string $name;
 
     #[ORM\Column(type: 'string', length: 255)]
-    private string $address; // Adresse complète
+    #[Groups(['doctor:read', 'businesssite:read'])]
+    private string $address;
 
     #[ORM\Column(type: 'string', length: 20, nullable: true)]
+    #[Groups(['doctor:read', 'businesssite:read'])]
     private ?string $phone = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['doctor:read', 'businesssite:read'])]
     private ?string $email = null;
 
-    // Relation vers la région
+    // Relation vers la région — on expose uniquement dans businesssite:read
     #[ORM\ManyToOne(targetEntity: Regions::class, inversedBy: 'businessSites')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['businesssite:read'])]
     private ?Regions $region = null;
 
-    // Relation vers les médecins
+    // PAS de #[Groups] sur les collections inverses → stoppe la récursion
     #[ORM\OneToMany(mappedBy: 'businessSite', targetEntity: Doctors::class)]
     private Collection $doctors;
 
-    // Relation vers les rendez-vous
     #[ORM\OneToMany(mappedBy: 'businessSite', targetEntity: Appointments::class)]
     private Collection $appointments;
 
-    // Relation vers les créneaux d'indisponibilité
     #[ORM\OneToMany(mappedBy: 'businessSite', targetEntity: UnavailabilitySlots::class)]
     private Collection $unavailabilitySlots;
 
@@ -113,9 +118,6 @@ class BusinessSites
         return $this;
     }
 
-    /**
-     * @return Collection<int, Doctors>
-     */
     public function getDoctors(): Collection
     {
         return $this->doctors;
@@ -127,7 +129,6 @@ class BusinessSites
             $this->doctors->add($doctor);
             $doctor->setBusinessSite($this);
         }
-
         return $this;
     }
 
@@ -138,21 +139,14 @@ class BusinessSites
                 $doctor->setBusinessSite(null);
             }
         }
-
         return $this;
     }
 
-    /**
-     * @return Collection<int, Appointments>
-     */
     public function getAppointments(): Collection
     {
         return $this->appointments;
     }
 
-    /**
-     * @return Collection<int, UnavailabilitySlots>
-     */
     public function getUnavailabilitySlots(): Collection
     {
         return $this->unavailabilitySlots;

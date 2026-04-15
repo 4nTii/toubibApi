@@ -2,6 +2,8 @@
 
 namespace App\Controller\User;
 
+use App\Entity\Doctors as Doctor;
+use App\Repository\DoctorsRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -9,10 +11,12 @@ use Symfony\Component\HttpFoundation\Request as HttpFoundationRequest;
 
 class ProfileController extends AbstractController
 {
-    public function me(): JsonResponse
-    {
+    public function me(
+        DoctorsRepository $doctorRepo
+    ): JsonResponse {
         /** @var App\Entity\Users $user */
         $user = $this->getUser();
+        $doctor = $doctorRepo->findByUserId($user->getId());
 
         if (!$user) {
             return $this->json([
@@ -20,6 +24,7 @@ class ProfileController extends AbstractController
                 'message' => 'Utilisateur non authentifié'
             ], 401);
         }
+
         return $this->json([
             'status' => true,
             'data' => [
@@ -37,10 +42,23 @@ class ProfileController extends AbstractController
                 'dateInscription' => $user->getDateInscription(),
                 'lastLogin' => $user->getLastLogin(),
                 'isActive' => $user->isActive(),
+                'isEmailVerified' => $user->isEmailVerified(),
+                'isPhoneVerified' => $user->isPhoneVerified(),
+                'doctor' => $doctor ? [
+                    'id'       => $doctor->getId(),
+                    'isActive' => $doctor->isActive(),
+                    'speciality' => $doctor->getSpeciality() ? [
+                        'id'   => $doctor->getSpeciality()->getId(),
+                        'name' => $doctor->getSpeciality()->getName(),
+                    ] : null,
+                    'businessSite' => $doctor->getBusinessSite() ? [
+                        'id'      => $doctor->getBusinessSite()->getId(),
+                        'name'    => $doctor->getBusinessSite()->getName(),
+                    ] : null,
+                ] : null,
             ]
         ], 200);
     }
-
 
     public function editProfile(HttpFoundationRequest $request, EntityManagerInterface $entityManager): JsonResponse
     {
