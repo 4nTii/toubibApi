@@ -42,8 +42,8 @@ class BusinessSites
     #[Groups(['businesssite:read'])]
     private ?Regions $region = null;
 
-    #[ORM\OneToMany(mappedBy: 'businessSite', targetEntity: Doctors::class)]
-    private Collection $doctors;
+    #[ORM\OneToMany(mappedBy: 'businessSite', targetEntity: DoctorBusinessSite::class, cascade: ['persist', 'remove'])]
+    private Collection $doctorBusinessSites;
 
     #[ORM\OneToMany(mappedBy: 'businessSite', targetEntity: Appointments::class)]
     private Collection $appointments;
@@ -53,7 +53,7 @@ class BusinessSites
 
     public function __construct()
     {
-        $this->doctors = new ArrayCollection();
+        $this->doctorBusinessSites = new ArrayCollection();
         $this->appointments = new ArrayCollection();
         $this->unavailabilitySlots = new ArrayCollection();
     }
@@ -131,27 +131,23 @@ class BusinessSites
         return $this;
     }
 
-    public function getDoctors(): Collection
+    public function getDoctorBusinessSites(): Collection
     {
-        return $this->doctors;
+        return $this->doctorBusinessSites;
     }
 
-    public function addDoctor(Doctors $doctor): self
+    public function addDoctorBusinessSite(DoctorBusinessSite $doctorBusinessSite): self
     {
-        if (!$this->doctors->contains($doctor)) {
-            $this->doctors->add($doctor);
-            $doctor->setBusinessSite($this);
+        if (!$this->doctorBusinessSites->contains($doctorBusinessSite)) {
+            $this->doctorBusinessSites->add($doctorBusinessSite);
+            $doctorBusinessSite->setBusinessSite($this);
         }
         return $this;
     }
 
-    public function removeDoctor(Doctors $doctor): self
+    public function removeDoctorBusinessSite(DoctorBusinessSite $doctorBusinessSite): self
     {
-        if ($this->doctors->removeElement($doctor)) {
-            if ($doctor->getBusinessSite() === $this) {
-                $doctor->setBusinessSite(null);
-            }
-        }
+        $this->doctorBusinessSites->removeElement($doctorBusinessSite);
         return $this;
     }
 

@@ -93,6 +93,13 @@ app_doctors_getAll:
     requirements:
         slash: /?
 
+app_doctors_getConnectedDoctor:
+    path: /api/doctor/me{slash}
+    controller: App\Controller\Doctors\DoctorsController::getConnectedDoctor
+    methods: GET
+    requirements:
+        slash: /?
+
 # CatchAll
 app_catch_all_api:
     path: /api/doctors/{url}

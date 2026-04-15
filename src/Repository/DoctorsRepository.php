@@ -48,6 +48,12 @@ class DoctorsRepository extends ServiceEntityRepository
             ->join('d.user', 'u')
             ->andWhere('u.id = :userId')
             ->setParameter('userId', $userId)
+            ->leftJoin('d.doctorBusinessSites', 'dbs')
+            ->addSelect('dbs')
+            ->leftJoin('dbs.businessSite', 'bs')
+            ->addSelect('bs')
+            ->leftJoin('d.speciality', 's')
+            ->addSelect('s')
             ->getQuery()
             ->getOneOrNullResult();
     }
@@ -66,7 +72,11 @@ class DoctorsRepository extends ServiceEntityRepository
             ->addSelect('u')
             ->leftJoin('d.speciality', 's')
             ->addSelect('s')
-            ->orderBy('u.id', 'DESC')  // trier par user.id
+            ->leftJoin('d.doctorBusinessSites', 'dbs')
+            ->addSelect('dbs')
+            ->leftJoin('dbs.businessSite', 'bs')
+            ->addSelect('bs')
+            ->orderBy('u.id', 'DESC')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
             ->getQuery()
@@ -74,7 +84,7 @@ class DoctorsRepository extends ServiceEntityRepository
     }
 
     /**
-     * Retourne tous les médecins actifs
+     * Retourne tous les médecins
      */
     public function getAllDoctors($page = 1, $limit = 5): array
     {
@@ -85,7 +95,11 @@ class DoctorsRepository extends ServiceEntityRepository
             ->addSelect('u')
             ->leftJoin('d.speciality', 's')
             ->addSelect('s')
-            ->orderBy('u.id', 'DESC')  // trier par user.id
+            ->leftJoin('d.doctorBusinessSites', 'dbs')
+            ->addSelect('dbs')
+            ->leftJoin('dbs.businessSite', 'bs')
+            ->addSelect('bs')
+            ->orderBy('u.id', 'DESC')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
             ->getQuery()
@@ -98,26 +112,40 @@ class DoctorsRepository extends ServiceEntityRepository
     public function findBySpecialty(Specialities $speciality): array
     {
         return $this->createQueryBuilder('d')
-            ->andWhere('d.specialty = :specialty')
+            ->andWhere('d.speciality = :speciality')
             ->andWhere('d.isActive = :active')
-            ->setParameter('specialty', $speciality)
+            ->setParameter('speciality', $speciality)
             ->setParameter('active', true)
-            ->orderBy('d.id', 'ASC')
+            ->leftJoin('d.user', 'u')
+            ->addSelect('u')
+            ->leftJoin('d.doctorBusinessSites', 'dbs')
+            ->addSelect('dbs')
+            ->leftJoin('dbs.businessSite', 'bs')
+            ->addSelect('bs')
+            ->orderBy('u.lastName', 'ASC')
             ->getQuery()
             ->getResult();
     }
 
     /**
-     * Récupère tous les médecins actifs d'un cabinet (business site)
+     * Récupère tous les médecins actifs d'un cabinet
      */
     public function findByBusinessSite(BusinessSites $businessSite): array
     {
         return $this->createQueryBuilder('d')
-            ->andWhere('d.businessSite = :businessSite')
+            ->leftJoin('d.doctorBusinessSites', 'dbs')
+            ->addSelect('dbs')
+            ->leftJoin('dbs.businessSite', 'bs')
+            ->addSelect('bs')
+            ->andWhere('bs = :businessSite')
             ->andWhere('d.isActive = :active')
             ->setParameter('businessSite', $businessSite)
             ->setParameter('active', true)
-            ->orderBy('d.id', 'ASC')
+            ->leftJoin('d.user', 'u')
+            ->addSelect('u')
+            ->leftJoin('d.speciality', 's')
+            ->addSelect('s')
+            ->orderBy('u.lastName', 'ASC')
             ->getQuery()
             ->getResult();
     }
@@ -129,10 +157,17 @@ class DoctorsRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('d')
             ->join('d.user', 'u')
+            ->addSelect('u')
             ->andWhere('d.isActive = :active')
             ->andWhere('u.firstName LIKE :name OR u.lastName LIKE :name')
             ->setParameter('active', true)
             ->setParameter('name', '%' . $name . '%')
+            ->leftJoin('d.speciality', 's')
+            ->addSelect('s')
+            ->leftJoin('d.doctorBusinessSites', 'dbs')
+            ->addSelect('dbs')
+            ->leftJoin('dbs.businessSite', 'bs')
+            ->addSelect('bs')
             ->orderBy('u.lastName', 'ASC')
             ->getQuery()
             ->getResult();
@@ -144,13 +179,40 @@ class DoctorsRepository extends ServiceEntityRepository
     public function findAvailableDoctors(\DateTimeInterface $fromDate): array
     {
         return $this->createQueryBuilder('d')
-            ->leftJoin('d.unavailabilitySlots', 'u')
             ->andWhere('d.isActive = :active')
-            ->andWhere('u.id IS NULL OR u.endTime < :fromDate OR u.startTime > :fromDate')
             ->setParameter('active', true)
+            ->leftJoin('d.unavailabilitySlots', 'us')
+            ->andWhere('us.id IS NULL OR us.endTime < :fromDate OR us.startTime > :fromDate')
             ->setParameter('fromDate', $fromDate)
-            ->orderBy('d.id', 'ASC')
+            ->leftJoin('d.user', 'u')
+            ->addSelect('u')
+            ->leftJoin('d.speciality', 's')
+            ->addSelect('s')
+            ->leftJoin('d.doctorBusinessSites', 'dbs')
+            ->addSelect('dbs')
+            ->leftJoin('dbs.businessSite', 'bs')
+            ->addSelect('bs')
+            ->orderBy('u.lastName', 'ASC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Récupère le owner d'un cabinet
+     */
+    public function findOwnerByBusinessSite(int $businessSiteId): ?Doctors
+    {
+        return $this->createQueryBuilder('d')
+            ->leftJoin('d.doctorBusinessSites', 'dbs')
+            ->addSelect('dbs')
+            ->leftJoin('dbs.businessSite', 'bs')
+            ->addSelect('bs')
+            ->andWhere('bs.id = :businessSiteId')
+            ->andWhere('dbs.isOwner = true')
+            ->setParameter('businessSiteId', $businessSiteId)
+            ->leftJoin('d.user', 'u')
+            ->addSelect('u')
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }

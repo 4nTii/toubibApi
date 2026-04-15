@@ -11,12 +11,10 @@ use Symfony\Component\HttpFoundation\Request as HttpFoundationRequest;
 
 class ProfileController extends AbstractController
 {
-    public function me(
-        DoctorsRepository $doctorRepo
-    ): JsonResponse {
-        /** @var App\Entity\Users $user */
+    public function me(DoctorsRepository $doctorRepo): JsonResponse
+    {
+        /** @var \App\Entity\Users $user */
         $user = $this->getUser();
-        $doctor = $doctorRepo->findByUserId($user->getId());
 
         if (!$user) {
             return $this->json([
@@ -25,39 +23,18 @@ class ProfileController extends AbstractController
             ], 401);
         }
 
-        return $this->json([
+        $doctor = $doctorRepo->findByUserId($user->getId());
+
+        $userData = $this->json($user, 200, [], ['groups' => ['user:read']])->getContent();
+        $userData = json_decode($userData, true);
+        $userData['isDoctor'] = $doctor !== null;
+
+        $response = [
             'status' => true,
-            'data' => [
-                'id' => $user->getId(),
-                'role' => $user->getRole(),
-                'email' => $user->getEmail(),
-                'phone' => $user->getPhone(),
-                'firstName' => $user->getFirstName(),
-                'lastName' => $user->getLastName(),
-                'birthDay' => $user->getBirthDay(),
-                'gender' => $user->getGender(),
-                'address' => $user->getAddress(),
-                'photo' => $user->getPhoto(),
-                'biography' => $user->getBiography(),
-                'dateInscription' => $user->getDateInscription(),
-                'lastLogin' => $user->getLastLogin(),
-                'isActive' => $user->isActive(),
-                'isEmailVerified' => $user->isEmailVerified(),
-                'isPhoneVerified' => $user->isPhoneVerified(),
-                'doctor' => $doctor ? [
-                    'id'       => $doctor->getId(),
-                    'isActive' => $doctor->isActive(),
-                    'speciality' => $doctor->getSpeciality() ? [
-                        'id'   => $doctor->getSpeciality()->getId(),
-                        'name' => $doctor->getSpeciality()->getName(),
-                    ] : null,
-                    'businessSite' => $doctor->getBusinessSite() ? [
-                        'id'      => $doctor->getBusinessSite()->getId(),
-                        'name'    => $doctor->getBusinessSite()->getName(),
-                    ] : null,
-                ] : null,
-            ]
-        ], 200);
+            'data'   => $userData
+        ];
+
+        return $this->json($response, 200);
     }
 
     public function editProfile(HttpFoundationRequest $request, EntityManagerInterface $entityManager): JsonResponse

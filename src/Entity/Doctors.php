@@ -5,8 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use App\Entity\Specialties;
-use Symfony\Component\Serializer\Attribute\Groups as Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'doctors')]
@@ -38,14 +37,6 @@ class Doctors
     #[Groups(['doctor:read'])]
     private ?string $profilePicture = null;
 
-    #[ORM\Column(name: 'consultation_duration', type: 'integer', options: ['default' => 30])]
-    #[Groups(['doctor:read'])]
-    private ?int $consultationDuration = null;
-
-    #[ORM\Column(name: 'consultation_fee', type: 'integer', nullable: true)]
-    #[Groups(['doctor:read'])]
-    private ?int $consultationFee = null;
-
     #[ORM\Column(name: 'accept_new_patients', type: 'boolean')]
     #[Groups(['doctor:read'])]
     private bool $acceptNewPatients = true;
@@ -53,10 +44,6 @@ class Doctors
     #[ORM\Column(name: 'teleconsultation_enabled', type: 'boolean')]
     #[Groups(['doctor:read'])]
     private bool $teleconsultationEnabled = false;
-
-    #[ORM\Column(name: 'working_schedule', type: 'json', nullable: true)]
-    #[Groups(['doctor:read'])]
-    private ?array $workingSchedule = null;
 
     #[ORM\Column(type: 'boolean')]
     #[Groups(['doctor:read'])]
@@ -74,11 +61,10 @@ class Doctors
     #[Groups(['doctor:read'])]
     private ?Specialities $speciality = null;
 
-    // Relation vers le cabinet
-    #[ORM\ManyToOne(targetEntity: BusinessSites::class, inversedBy: 'doctors')]
-    #[ORM\JoinColumn(nullable: false)]
+    // Relation vers les cabinets via la table de jointure
+    #[ORM\OneToMany(mappedBy: 'doctor', targetEntity: DoctorBusinessSite::class, cascade: ['persist', 'remove'])]
     #[Groups(['doctor:read'])]
-    private ?BusinessSites $businessSite = null;
+    private Collection $doctorBusinessSites;
 
     // Pas de #[Groups] sur les collections → le serializer s'arrête
     #[ORM\OneToMany(mappedBy: 'doctor', targetEntity: Appointments::class)]
@@ -95,6 +81,7 @@ class Doctors
 
     public function __construct()
     {
+        $this->doctorBusinessSites = new ArrayCollection();
         $this->appointments = new ArrayCollection();
         $this->unavailabilitySlots = new ArrayCollection();
         $this->reviews = new ArrayCollection();
@@ -102,21 +89,8 @@ class Doctors
         $this->verified = true;
         $this->isActive = true;
         $this->acceptNewPatients = true;
-        $this->consultationDuration = 30;
-        $this->consultationFee = 20;
         $this->teleconsultationEnabled = false;
-        $this->workingSchedule = [
-            "monday"    => ["start" => "08:00", "end" => "18:00", "enabled" => true],
-            "tuesday"   => ["start" => "08:00", "end" => "18:00", "enabled" => true],
-            "wednesday" => ["start" => "08:00", "end" => "12:00", "enabled" => true],
-            "thursday"  => ["start" => "08:00", "end" => "18:00", "enabled" => true],
-            "friday"    => ["start" => "08:00", "end" => "17:00", "enabled" => true],
-            "saturday"  => ["start" => "09:00", "end" => "12:00", "enabled" => false],
-            "sunday"    => ["start" => "00:00", "end" => "00:00", "enabled" => false],
-        ];
     }
-
-    // -------------------- Getters & Setters --------------------
 
     public function getId(): ?int
     {
@@ -173,26 +147,6 @@ class Doctors
         return $this;
     }
 
-    public function getConsultationDuration(): ?int
-    {
-        return $this->consultationDuration;
-    }
-    public function setConsultationDuration(?int $consultationDuration): self
-    {
-        $this->consultationDuration = $consultationDuration;
-        return $this;
-    }
-
-    public function getConsultationFee(): ?int
-    {
-        return $this->consultationFee;
-    }
-    public function setConsultationFee(?int $consultationFee): self
-    {
-        $this->consultationFee = $consultationFee;
-        return $this;
-    }
-
     public function isAcceptNewPatients(): bool
     {
         return $this->acceptNewPatients;
@@ -210,16 +164,6 @@ class Doctors
     public function setTeleconsultationEnabled(bool $teleconsultationEnabled): self
     {
         $this->teleconsultationEnabled = $teleconsultationEnabled;
-        return $this;
-    }
-
-    public function getWorkingSchedule(): ?array
-    {
-        return $this->workingSchedule;
-    }
-    public function setWorkingSchedule(?array $workingSchedule): self
-    {
-        $this->workingSchedule = $workingSchedule;
         return $this;
     }
 
@@ -253,13 +197,23 @@ class Doctors
         return $this;
     }
 
-    public function getBusinessSite(): ?BusinessSites
+    public function getDoctorBusinessSites(): Collection
     {
-        return $this->businessSite;
+        return $this->doctorBusinessSites;
     }
-    public function setBusinessSite(?BusinessSites $businessSite): self
+
+    public function addDoctorBusinessSite(DoctorBusinessSite $dbs): self
     {
-        $this->businessSite = $businessSite;
+        if (!$this->doctorBusinessSites->contains($dbs)) {
+            $this->doctorBusinessSites->add($dbs);
+            $dbs->setDoctor($this);
+        }
+        return $this;
+    }
+
+    public function removeDoctorBusinessSite(DoctorBusinessSite $dbs): self
+    {
+        $this->doctorBusinessSites->removeElement($dbs);
         return $this;
     }
 
