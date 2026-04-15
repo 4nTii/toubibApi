@@ -40,21 +40,24 @@ This command runs in order:
 
 1. `make setup` — copies `parameters.yml.dist`, installs Composer dependencies and generates JWT keys
 2. `make cache-clear` — clears the Symfony cache
-3. `make dev` — starts the server via `symfony serve`
+3. `make database` — Run database server
+4. `make dev` — starts the server via `symfony serve`
 
 ---
 
 ## Available Commands
 
-| Command            | Description                                         |
-| ------------------ | --------------------------------------------------- |
-| `make`             | Full setup + cache-clear + symfony serve            |
-| `make setup`       | parameters + composer install + jwt                 |
-| `make install`     | `composer install` only                             |
-| `make parameters`  | Creates `parameters.yml` from `parameters.yml.dist` |
-| `make jwt`         | Generates JWT keys in `config/jwt/`                 |
-| `make cache-clear` | Clears the Symfony cache                            |
-| `make dev`         | Starts the Symfony server                           |
+| Command            | Description                                                   |
+| ------------------ | ------------------------------------------------------------- |
+| `make`             | Full setup + cache-clear + symfony serve                      |
+| `make setup`       | parameters + composer install + jwt                           |
+| `make install`     | `composer install` only                                       |
+| `make database`    | Run database server (default: Wampserver) // can be changed   |
+| `make parameters`  | Creates `parameters.yml` from `parameters.yml.dist`           |
+| `make jwt`         | Generates JWT keys in `config/jwt/`                           |
+| `make cache-clear` | Clears the Symfony cache                                      |
+| `make dev`         | Starts the Symfony server                                     |
+| `make server-stop` | Stop the Symfony server                                       |
 
 ---
 
