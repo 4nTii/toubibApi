@@ -25,6 +25,10 @@ class BusinessSites
     #[Groups(['doctor:read', 'businesssite:read'])]
     private string $address;
 
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Groups(['doctor:read', 'businesssite:read'])]
+    private string $ville;
+
     #[ORM\Column(type: 'string', length: 20, nullable: true)]
     #[Groups(['doctor:read', 'businesssite:read'])]
     private ?string $phone = null;
@@ -33,13 +37,11 @@ class BusinessSites
     #[Groups(['doctor:read', 'businesssite:read'])]
     private ?string $email = null;
 
-    // Relation vers la région — on expose uniquement dans businesssite:read
     #[ORM\ManyToOne(targetEntity: Regions::class, inversedBy: 'businessSites')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['businesssite:read'])]
     private ?Regions $region = null;
 
-    // PAS de #[Groups] sur les collections inverses → stoppe la récursion
     #[ORM\OneToMany(mappedBy: 'businessSite', targetEntity: Doctors::class)]
     private Collection $doctors;
 
@@ -82,6 +84,17 @@ class BusinessSites
     public function setAddress(string $address): self
     {
         $this->address = $address;
+        return $this;
+    }
+
+    public function getVille(): string
+    {
+        return $this->ville;
+    }
+
+    public function setVille(string $ville): self
+    {
+        $this->ville = $ville;
         return $this;
     }
 
