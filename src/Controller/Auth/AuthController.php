@@ -104,11 +104,11 @@ class AuthController extends AbstractController
         $response->headers->setCookie(
             Cookie::create('app_auth')
                 ->withValue('')
-                ->withExpires(new \DateTime('-1 hour'))
-                ->withPath('/')
-                ->withSecure(true)
                 ->withHttpOnly(true)
-                ->withSameSite('lax')
+                ->withSecure(true)
+                ->withSameSite('none')
+                ->withPath('/')
+                ->withExpires(new \DateTime('-1 hour'))
         );
 
         return $response;

@@ -12,9 +12,12 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Ignore as Ignore;
 use Symfony\Component\Serializer\Attribute\Groups as Groups;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'users')]
+#[UniqueEntity(fields: ['email'], message: 'Ce Email est déjà utilisé')]
+#[UniqueEntity(fields: ['phone'], message: 'Ce numéro est déjà utilisé')]
 class Users implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
