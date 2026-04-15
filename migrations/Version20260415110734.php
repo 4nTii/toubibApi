@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20260313140024 extends AbstractMigration
+final class Version20260415110734 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -27,7 +27,6 @@ final class Version20260313140024 extends AbstractMigration
         $this->addSql('ALTER TABLE doctors ADD CONSTRAINT FK_B67687BEA76ED395 FOREIGN KEY (user_id) REFERENCES users (id)');
         $this->addSql('ALTER TABLE doctors ADD CONSTRAINT FK_B67687BE3B5A08D7 FOREIGN KEY (speciality_id) REFERENCES specialties (id)');
         $this->addSql('ALTER TABLE doctors ADD CONSTRAINT FK_B67687BEAB8EAD0B FOREIGN KEY (business_site_id) REFERENCES business_sites (id)');
-        $this->addSql('ALTER TABLE logging_attempt ADD CONSTRAINT FK_F028C1DFA76ED395 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE messages ADD CONSTRAINT FK_DB021E96F624B39D FOREIGN KEY (sender_id) REFERENCES users (id)');
         $this->addSql('ALTER TABLE messages ADD CONSTRAINT FK_DB021E96CD53EDB6 FOREIGN KEY (receiver_id) REFERENCES users (id)');
         $this->addSql('ALTER TABLE messages ADD CONSTRAINT FK_DB021E96E5B533F9 FOREIGN KEY (appointment_id) REFERENCES appointments (id)');
@@ -41,6 +40,7 @@ final class Version20260313140024 extends AbstractMigration
         $this->addSql('ALTER TABLE reviews ADD CONSTRAINT FK_6970EB0FE5B533F9 FOREIGN KEY (appointment_id) REFERENCES appointments (id)');
         $this->addSql('ALTER TABLE unavailability_slots ADD CONSTRAINT FK_7FD233D987F4FB17 FOREIGN KEY (doctor_id) REFERENCES doctors (id)');
         $this->addSql('ALTER TABLE unavailability_slots ADD CONSTRAINT FK_7FD233D9AB8EAD0B FOREIGN KEY (business_site_id) REFERENCES business_sites (id)');
+        $this->addSql('ALTER TABLE users_password_reset_token ADD CONSTRAINT FK_7BC3403EA76ED395 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE');
     }
 
     public function down(Schema $schema): void
@@ -53,7 +53,6 @@ final class Version20260313140024 extends AbstractMigration
         $this->addSql('ALTER TABLE doctors DROP FOREIGN KEY FK_B67687BEA76ED395');
         $this->addSql('ALTER TABLE doctors DROP FOREIGN KEY FK_B67687BE3B5A08D7');
         $this->addSql('ALTER TABLE doctors DROP FOREIGN KEY FK_B67687BEAB8EAD0B');
-        $this->addSql('ALTER TABLE logging_attempt DROP FOREIGN KEY FK_F028C1DFA76ED395');
         $this->addSql('ALTER TABLE messages DROP FOREIGN KEY FK_DB021E96F624B39D');
         $this->addSql('ALTER TABLE messages DROP FOREIGN KEY FK_DB021E96CD53EDB6');
         $this->addSql('ALTER TABLE messages DROP FOREIGN KEY FK_DB021E96E5B533F9');
@@ -67,5 +66,6 @@ final class Version20260313140024 extends AbstractMigration
         $this->addSql('ALTER TABLE reviews DROP FOREIGN KEY FK_6970EB0FE5B533F9');
         $this->addSql('ALTER TABLE unavailability_slots DROP FOREIGN KEY FK_7FD233D987F4FB17');
         $this->addSql('ALTER TABLE unavailability_slots DROP FOREIGN KEY FK_7FD233D9AB8EAD0B');
+        $this->addSql('ALTER TABLE users_password_reset_token DROP FOREIGN KEY FK_7BC3403EA76ED395');
     }
 }

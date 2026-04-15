@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20260315102619 extends AbstractMigration
+final class Version20260414185611 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -20,6 +20,8 @@ final class Version20260315102619 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
+        $this->addSql('CREATE TABLE users_password_reset_token (id INT AUTO_INCREMENT NOT NULL, token VARCHAR(255) NOT NULL, created_at DATETIME NOT NULL, user_id INT NOT NULL, INDEX IDX_7BC3403EA76ED395 (user_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
+        $this->addSql('ALTER TABLE users_password_reset_token ADD CONSTRAINT FK_7BC3403EA76ED395 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE appointments ADD CONSTRAINT FK_6A41727A6B899279 FOREIGN KEY (patient_id) REFERENCES patients (id)');
         $this->addSql('ALTER TABLE appointments ADD CONSTRAINT FK_6A41727A87F4FB17 FOREIGN KEY (doctor_id) REFERENCES doctors (id)');
         $this->addSql('ALTER TABLE appointments ADD CONSTRAINT FK_6A41727AAB8EAD0B FOREIGN KEY (business_site_id) REFERENCES business_sites (id)');
@@ -27,6 +29,8 @@ final class Version20260315102619 extends AbstractMigration
         $this->addSql('ALTER TABLE doctors ADD CONSTRAINT FK_B67687BEA76ED395 FOREIGN KEY (user_id) REFERENCES users (id)');
         $this->addSql('ALTER TABLE doctors ADD CONSTRAINT FK_B67687BE3B5A08D7 FOREIGN KEY (speciality_id) REFERENCES specialties (id)');
         $this->addSql('ALTER TABLE doctors ADD CONSTRAINT FK_B67687BEAB8EAD0B FOREIGN KEY (business_site_id) REFERENCES business_sites (id)');
+        $this->addSql('DROP INDEX IDX_F028C1DFA76ED395 ON logging_attempt');
+        $this->addSql('ALTER TABLE logging_attempt ADD email VARCHAR(255) DEFAULT NULL, ADD user_agent LONGTEXT DEFAULT NULL, DROP user_id');
         $this->addSql('ALTER TABLE messages ADD CONSTRAINT FK_DB021E96F624B39D FOREIGN KEY (sender_id) REFERENCES users (id)');
         $this->addSql('ALTER TABLE messages ADD CONSTRAINT FK_DB021E96CD53EDB6 FOREIGN KEY (receiver_id) REFERENCES users (id)');
         $this->addSql('ALTER TABLE messages ADD CONSTRAINT FK_DB021E96E5B533F9 FOREIGN KEY (appointment_id) REFERENCES appointments (id)');
@@ -40,12 +44,14 @@ final class Version20260315102619 extends AbstractMigration
         $this->addSql('ALTER TABLE reviews ADD CONSTRAINT FK_6970EB0FE5B533F9 FOREIGN KEY (appointment_id) REFERENCES appointments (id)');
         $this->addSql('ALTER TABLE unavailability_slots ADD CONSTRAINT FK_7FD233D987F4FB17 FOREIGN KEY (doctor_id) REFERENCES doctors (id)');
         $this->addSql('ALTER TABLE unavailability_slots ADD CONSTRAINT FK_7FD233D9AB8EAD0B FOREIGN KEY (business_site_id) REFERENCES business_sites (id)');
-        $this->addSql('ALTER TABLE users CHANGE user_token user_token VARCHAR(255) NOT NULL');
+        $this->addSql('ALTER TABLE users ADD is_phone_verified TINYINT NOT NULL, ADD is_email_verified TINYINT NOT NULL, ADD user_token VARCHAR(255) NOT NULL');
     }
 
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
+        $this->addSql('ALTER TABLE users_password_reset_token DROP FOREIGN KEY FK_7BC3403EA76ED395');
+        $this->addSql('DROP TABLE users_password_reset_token');
         $this->addSql('ALTER TABLE appointments DROP FOREIGN KEY FK_6A41727A6B899279');
         $this->addSql('ALTER TABLE appointments DROP FOREIGN KEY FK_6A41727A87F4FB17');
         $this->addSql('ALTER TABLE appointments DROP FOREIGN KEY FK_6A41727AAB8EAD0B');
@@ -53,6 +59,8 @@ final class Version20260315102619 extends AbstractMigration
         $this->addSql('ALTER TABLE doctors DROP FOREIGN KEY FK_B67687BEA76ED395');
         $this->addSql('ALTER TABLE doctors DROP FOREIGN KEY FK_B67687BE3B5A08D7');
         $this->addSql('ALTER TABLE doctors DROP FOREIGN KEY FK_B67687BEAB8EAD0B');
+        $this->addSql('ALTER TABLE logging_attempt ADD user_id INT NOT NULL, DROP email, DROP user_agent');
+        $this->addSql('CREATE INDEX IDX_F028C1DFA76ED395 ON logging_attempt (user_id)');
         $this->addSql('ALTER TABLE messages DROP FOREIGN KEY FK_DB021E96F624B39D');
         $this->addSql('ALTER TABLE messages DROP FOREIGN KEY FK_DB021E96CD53EDB6');
         $this->addSql('ALTER TABLE messages DROP FOREIGN KEY FK_DB021E96E5B533F9');
@@ -66,6 +74,6 @@ final class Version20260315102619 extends AbstractMigration
         $this->addSql('ALTER TABLE reviews DROP FOREIGN KEY FK_6970EB0FE5B533F9');
         $this->addSql('ALTER TABLE unavailability_slots DROP FOREIGN KEY FK_7FD233D987F4FB17');
         $this->addSql('ALTER TABLE unavailability_slots DROP FOREIGN KEY FK_7FD233D9AB8EAD0B');
-        $this->addSql('ALTER TABLE users CHANGE user_token user_token VARCHAR(255) DEFAULT NULL');
+        $this->addSql('ALTER TABLE users DROP is_phone_verified, DROP is_email_verified, DROP user_token');
     }
 }

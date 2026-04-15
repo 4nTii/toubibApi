@@ -40,6 +40,19 @@ class DoctorsRepository extends ServiceEntityRepository
     }
 
     /**
+     * Trouver un médecin par UserId
+     */
+    public function findByUserId(int $userId): ?Doctors
+    {
+        return $this->createQueryBuilder('d')
+            ->join('d.user', 'u')
+            ->andWhere('u.id = :userId')
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
      * Retourne tous les médecins actifs
      */
     public function getAllActiveDoctors($page = 1, $limit = 5): array

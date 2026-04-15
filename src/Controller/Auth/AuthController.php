@@ -224,6 +224,7 @@ class AuthController extends AbstractController
         }
 
         $user->setIsActive(true);
+        $user->setIsEmailVerified(true);
         $entityManger->flush();
         return $this->json([
             'status' => true,

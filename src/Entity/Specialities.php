@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'specialties')]
@@ -13,13 +14,16 @@ class Specialities
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    #[Groups(['doctor:read', 'specialties:read'])]
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 100)]
-    private string $name; // Nom de la spécialité, ex: "Généraliste", "Cardiologue"
+    #[Groups(['doctor:read', 'specialties:read'])]
+    private string $name;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $description = null; // Description facultative
+    #[Groups(['doctor:read', 'specialties:read'])]
+    private ?string $description = null;
 
     // Relation vers les médecins
     #[ORM\OneToMany(mappedBy: 'speciality', targetEntity: Doctors::class)]

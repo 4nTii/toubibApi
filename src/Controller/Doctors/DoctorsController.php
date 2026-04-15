@@ -16,17 +16,7 @@ class DoctorsController extends AbstractController
 
         $doctors = $doctorsRepository->getAllDoctors($page, $limit);
 
-        //dd($doctors[0]->getUser());
-
-        $data = array_map(fn($doctor) => [
-            'doctorId' => $doctor->getUser()?->getId(),
-            'firstName' => $doctor->getUser()?->getFirstName(),
-            'lastName' => $doctor->getUser()?->getLastName(),
-            'email' => $doctor->getUser()?->getEmail(),
-            'speciality' => $doctor->getSpeciality()?->getName(),
-        ], $doctors);
-
-        if (empty($data)) {
+        if (empty($doctors)) {
             return $this->json([
                 'status' => false,
                 'message' => 'Aucun resultat trouvé'
@@ -35,11 +25,11 @@ class DoctorsController extends AbstractController
 
         return $this->json([
             'status' => true,
-            'data' => [
-                'page' => $page,
+            'data'   => [
+                'page'  => $page,
                 'limit' => $limit,
-                'data' => $data
+                'doctors'  => $doctors,
             ]
-        ], 200);
+        ], 200, [], ['groups' => ['doctor:read']]);
     }
 }

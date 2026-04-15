@@ -10,6 +10,8 @@ use App\Entity\LoggingAttempt;
 use DateTime;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Ignore as Ignore;
+use Symfony\Component\Serializer\Attribute\Groups as Groups;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'users')]
@@ -18,32 +20,35 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    #[Groups(['user:read', 'doctor:read'])]
     private ?int $id = null;
 
     #[ORM\Column(name: "first_name", type: 'string', length: 50)]
     #[Assert\NotBlank(message: "Le prénom est requis")]
     #[Assert\Length(min: 2, max: 50, minMessage: "Le prénom doit faire au moins {{ limit }} caractères")]
+    #[Groups(['user:read', 'doctor:read'])]
     private string $firstName;
 
     #[ORM\Column(name: "last_name", type: 'string', length: 50)]
     #[Assert\NotBlank(message: "Le nom est requis")]
     #[Assert\Length(min: 2, max: 50)]
+    #[Groups(['user:read', 'doctor:read'])]
     private string $lastName;
 
     #[ORM\Column(name: "gender", type: "string", length: 10)]
     #[Assert\NotBlank(message: "Le genre est obligatoire")]
-    #[Assert\Choice(
-        choices: ['male', 'female'],
-        message: "Le genre doit être 'male' ou 'female'"
-    )]
+    #[Assert\Choice(choices: ['male', 'female'], message: "Le genre doit être 'male' ou 'female'")]
+    #[Groups(['user:read', 'doctor:read'])]
     private string $gender;
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
     #[Assert\NotBlank(message: "L'email est requis")]
     #[Assert\Email(message: "Format d'email invalide")]
+    #[Groups(['user:read', 'doctor:read'])]
     private string $email;
 
     #[ORM\Column(name: "address", type: 'string', length: 255, nullable: true)]
+    #[Groups(['user:read'])]
     private ?string $address;
 
     #[ORM\Column(type: 'string', length: 50, unique: true)]
@@ -52,35 +57,55 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         pattern: "/^\+[0-9]{1,13}$/",
         message: "Format du numéro de téléphone invalide, il doit commencer par + et contenir maximum 13 chiffres"
     )]
+    #[Groups(['user:read', 'doctor:read'])]
     private string $phone;
 
+    // ne jamais l'exposer
     #[ORM\Column(type: 'string')]
     #[Assert\NotBlank(message: "Le mot de passe est requis")]
     #[Assert\Length(min: 6, minMessage: "Le mot de passe doit faire au moins {{ limit }} caractères")]
+    #[Ignore]
     private string $password;
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Groups(['user:read', 'doctor:read'])]
     private ?string $photo = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['user:read'])]
     private ?string $biography = null;
 
     #[ORM\Column(type: 'date', nullable: true)]
+    #[Groups(['user:read'])]
     private ?\DateTimeInterface $birthDay = null;
 
     #[ORM\Column(type: 'datetime')]
+    #[Groups(['user:read'])]
     private \DateTimeInterface $dateInscription;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Groups(['user:read'])]
     private ?\DateTimeInterface $lastLogin = null;
 
     #[ORM\Column(type: 'string', length: 20)]
-    private string $role; // ex: "ROLE_ADMIN" ou "ROLE_USER"
+    #[Groups(['user:read', 'doctor:read'])]
+    private string $role;
 
     #[ORM\Column(type: 'boolean')]
+    #[Groups(['user:read'])]
     private bool $isActive = true;
 
+    #[ORM\Column(type: 'boolean')]
+    #[Groups(['user:read'])]
+    private bool $isPhoneVerified = true;
+
+    #[ORM\Column(type: 'boolean')]
+    #[Groups(['user:read'])]
+    private bool $isEmailVerified = true;
+
+    // ne jamais l'exposer
     #[ORM\Column(type: 'string', length: 255)]
+    #[Ignore]
     private string $userToken;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: UsersPasswordResetToken::class, cascade: ['remove'])]
@@ -92,7 +117,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'receiver', targetEntity: Messages::class)]
     private Collection $receivedMessages;
 
-
     public function __construct()
     {
         $this->sentMessages = new ArrayCollection();
@@ -103,6 +127,8 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         $this->role = 'ROLE_USER';
         $this->userToken = bin2hex(random_bytes(32));
         $this->isActive = false;
+        $this->isEmailVerified = false;
+        $this->isPhoneVerified = false;
     }
 
     // -------------------- Getters & Setters --------------------
@@ -116,7 +142,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->firstName;
     }
-
     public function setFirstName(string $firstName): self
     {
         $this->firstName = $firstName;
@@ -127,7 +152,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->lastName;
     }
-
     public function setLastName(string $lastName): self
     {
         $this->lastName = $lastName;
@@ -138,7 +162,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->gender;
     }
-
     public function setGender(string $gender): self
     {
         $this->gender = $gender;
@@ -149,7 +172,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->email;
     }
-
     public function setEmail(string $email): self
     {
         $this->email = $email;
@@ -160,7 +182,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->address;
     }
-
     public function setAddress(?string $address): self
     {
         $this->address = $address;
@@ -171,7 +192,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->phone;
     }
-
     public function setPhone(string $phone): self
     {
         $this->phone = $phone;
@@ -182,7 +202,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->password;
     }
-
     public function setPassword(string $password): self
     {
         $this->password = $password;
@@ -193,7 +212,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->photo;
     }
-
     public function setPhoto(?string $photo): self
     {
         $this->photo = $photo;
@@ -204,10 +222,9 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->biography;
     }
-
-    public function setBirthDay(\DateTimeInterface $birthDay): self
+    public function setBiography(?string $biography): self
     {
-        $this->birthDay = $birthDay;
+        $this->biography = $biography;
         return $this;
     }
 
@@ -215,10 +232,9 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->birthDay;
     }
-
-    public function setBiography(?string $biography): self
+    public function setBirthDay(\DateTimeInterface $birthDay): self
     {
-        $this->biography = $biography;
+        $this->birthDay = $birthDay;
         return $this;
     }
 
@@ -226,7 +242,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->dateInscription;
     }
-
     public function setDateInscription(\DateTimeInterface $dateInscription): self
     {
         $this->dateInscription = $dateInscription;
@@ -237,7 +252,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->lastLogin;
     }
-
     public function setLastLogin(?\DateTimeInterface $lastLogin): self
     {
         $this->lastLogin = $lastLogin;
@@ -248,7 +262,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->role;
     }
-
     public function setRole(string $role): self
     {
         $this->role = $role;
@@ -259,10 +272,29 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->isActive;
     }
-
     public function setIsActive(bool $isActive): self
     {
         $this->isActive = $isActive;
+        return $this;
+    }
+
+    public function isPhoneVerified(): bool
+    {
+        return $this->isPhoneVerified;
+    }
+    public function setIsPhoneVerified(bool $isPhoneVerified): self
+    {
+        $this->isPhoneVerified = $isPhoneVerified;
+        return $this;
+    }
+
+    public function isEmailVerified(): bool
+    {
+        return $this->isEmailVerified;
+    }
+    public function setIsEmailVerified(bool $isEmailVerified): self
+    {
+        $this->isEmailVerified = $isEmailVerified;
         return $this;
     }
 
@@ -270,7 +302,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->userToken;
     }
-
     public function setUserToken(string $userToken): self
     {
         $this->userToken = $userToken;
@@ -281,7 +312,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->passwordResetTokens;
     }
-
 
     public function addPasswordResetToken(UsersPasswordResetToken $token): self
     {
@@ -298,21 +328,15 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // --- Les caprices du JWT
-
     public function getUserIdentifier(): string
     {
         return $this->email;
     }
 
-    // --- nécessaire pour UserInterface
     public function getRoles(): array
     {
         return [$this->role];
     }
 
-    public function eraseCredentials(): void
-    {
-        // TODO: voir les données sensibles temporaires, à effacer ici (comprendre pourquoi)
-    }
+    public function eraseCredentials(): void {}
 }
