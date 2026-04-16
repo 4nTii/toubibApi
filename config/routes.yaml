@@ -100,6 +100,13 @@ app_doctors_getConnectedDoctor:
     requirements:
         slash: /?
 
+app_doctors_updateProfileDoctor:
+    path: /api/doctor/me{slash}
+    controller: App\Controller\Doctors\DoctorsController::updateConnectedDoctor
+    methods: PATCH
+    requirements:
+        slash: /?
+
 # CatchAll
 app_catch_all_api:
     path: /api/doctors/{url}
