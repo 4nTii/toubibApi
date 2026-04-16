@@ -21,6 +21,10 @@ parameters:
     mailer_from_news: "%env(MAILER_FROM_NEWS)%"
     mailer_api_uri: "%env(MAILER_API_URI)%"
     mailer_api_token: "%env(MAILER_API_TOKEN)%"
+    ftp_host: "%env(FTP_HOST)%"
+    ftp_user: "%env(FTP_USER)%"
+    ftp_pass: "%env(FTP_PASS)%"
+    ftp_base_dir: "%env(FTP_BASE_DIR)%"
 
 services:
     # default configuration for services in *this* file
