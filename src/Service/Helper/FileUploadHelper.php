@@ -22,19 +22,38 @@ class FileUploadHelper
 
     private function connect()
     {
-        $conn = ftp_connect($this->host);
+        $conn = \ftp_connect($this->host);
 
         if (!$conn) {
             throw new \Exception("Connexion FTP échouée");
         }
 
-        if (!ftp_login($conn, $this->user, $this->pass)) {
+        if (!\ftp_login($conn, $this->user, $this->pass)) {
             throw new \Exception("Login FTP échoué");
         }
 
-        ftp_pasv($conn, true);
+        \ftp_pasv($conn, true);
 
         return $conn;
+    }
+
+    /**
+     * Création récursive des dossiers FTP
+     */
+    private function createDirectory($conn, string $path): void
+    {
+        $parts = explode('/', trim($path, '/'));
+        $currentPath = '';
+
+        foreach ($parts as $part) {
+            $currentPath .= '/' . $part;
+
+            if (!@ftp_chdir($conn, $currentPath)) {
+                if (!\ftp_mkdir($conn, $currentPath)) {
+                    throw new \Exception("Impossible de créer le dossier FTP: $currentPath");
+                }
+            }
+        }
     }
 
     public function upload(
@@ -71,21 +90,23 @@ class FileUploadHelper
 
         $conn = $this->connect();
 
-        // 🔥 créer dossier si besoin
-        if ($subDir !== '') {
-            @ftp_mkdir($conn, $remotePath);
-        }
+        // Création fiable des dossiers
+        $this->createDirectory($conn, $remotePath);
 
         $tempPath = $file->getPathname();
 
-        $uploadPath = $remotePath . '/' . $filename;
-
-        if (!ftp_put($conn, $uploadPath, $tempPath, FTP_BINARY)) {
-            ftp_close($conn);
-            throw new \Exception("Upload FTP échoué");
+        if (!file_exists($tempPath)) {
+            throw new \Exception("Fichier temporaire introuvable: " . $tempPath);
         }
 
-        ftp_close($conn);
+        $uploadPath = $remotePath . '/' . $filename;
+
+        if (!\ftp_put($conn, $uploadPath, $tempPath, FTP_BINARY)) {
+            \ftp_close($conn);
+            throw new \Exception("Upload FTP échoué vers: " . $uploadPath);
+        }
+
+        \ftp_close($conn);
 
         return ($subDir ? $subDir . '/' : '') . $filename;
     }
@@ -102,9 +123,9 @@ class FileUploadHelper
 
         $filePath = $this->baseDir . '/' . $relativePath;
 
-        $result = ftp_delete($conn, $filePath);
+        $result = \ftp_delete($conn, $filePath);
 
-        ftp_close($conn);
+        \ftp_close($conn);
 
         return $result;
     }
