@@ -39,7 +39,7 @@ class BusinessSites
 
     #[ORM\ManyToOne(targetEntity: Regions::class, inversedBy: 'businessSites')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['businesssite:read'])]
+    #[Groups(['doctor:read', 'businesssite:read'])]
     private ?Regions $region = null;
 
     #[ORM\OneToMany(mappedBy: 'businessSite', targetEntity: DoctorBusinessSite::class, cascade: ['persist', 'remove'])]

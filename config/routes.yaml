@@ -107,6 +107,28 @@ app_doctors_updateProfileDoctor:
     requirements:
         slash: /?
 
+# BusinessSites and DoctorsBusinessSites
+app_businesssites_getby_id:
+    path: /api/businesssites/{businesssitesId}{slash}
+    controller: App\Controller\BusinessSites\BusinessSitesController::getBusinessSites
+    methods: GET
+    requirements:
+        slash: /?
+
+app_businesssites_update:
+    path: /api/businesssites/{businesssitesId}{slash}
+    controller: App\Controller\BusinessSites\BusinessSitesController::updateBusinessSites
+    methods: PATCH
+    requirements:
+        slash: /?
+
+app_businesssites_delete:
+    path: /api/businesssites/{businesssitesId}/doctor/{doctorId}{slash}
+    controller: App\Controller\BusinessSites\BusinessSitesController::deleteDoctorFromBusinessSite
+    methods: DELETE
+    requirements:
+        slash: /?
+
 # CatchAll
 app_catch_all_api:
     path: /api/doctors/{url}
