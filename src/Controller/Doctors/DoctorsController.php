@@ -80,6 +80,7 @@ class DoctorsController extends AbstractController
 
         // JSON depuis FormData ou JSON direct
         $data = $request->request->get('data');
+        $photo = $request->files->get('profilePicture');
 
         if ($data !== null) {
             $data = json_decode($data, true);
@@ -87,19 +88,21 @@ class DoctorsController extends AbstractController
             $data = json_decode($request->getContent(), true);
         }
 
-        if (empty($data)) {
+        if (empty($data) && !$photo) {
             return $this->json([
                 'status'  => false,
                 'message' => 'Aucune valeur à modifier.'
             ], 400);
         }
 
-        if (empty($data)) {
+        /* 
+        // TODO: ne fonctionne pas: ajouté une condition sur le format de donnée
+        if ($data) {
             return $this->json([
                 'status'  => false,
                 'message' => 'Format de données incorrect.'
             ], 400);
-        }
+        } */
 
         /** @var Users $user */
         $user = $this->getUser();
@@ -113,13 +116,14 @@ class DoctorsController extends AbstractController
             ], 404);
         }
 
-        /*  TODO: Si il y a un FTP seulement alors Upload photo
-        $photo = $request->files->get('profilePicture');
-
+        // TODO: Ajouter les FTP pour les autres env (que PROD pour l'instant)
         if ($photo) {
-            $path = $fileUploadHelper->upload($photo, 'doctors');
+            $path = $fileUploadHelper->upload($photo, 'avatars/doctors');
+            // delete l'ancienne photo du FTP
+            $fileUploadHelper->delete($doctor->getProfilePicture());
+
             $doctor->setProfilePicture($path);
-        } */
+        }
 
         // Update fields
         $doctor->setBiography($data['biography'] ?? $doctor->getBiography());
