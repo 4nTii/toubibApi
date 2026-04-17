@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'regions')]
@@ -16,9 +17,11 @@ class Regions
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 100)]
+    #[Groups(['doctor:read', 'businesssite:read'])]
     private string $name; // Nom de la région
 
     #[ORM\Column(type: 'string', length: 100)]
+    #[Groups(['doctor:read', 'businesssite:read'])]
     private string $country; // Nom du pays
 
     // Relation vers business_sites
