@@ -161,6 +161,13 @@ app_search_doc_bus_spec:
     requirements:
         slash: /?
 
+app_search_region_ville:
+    path: /api/searchgeo{slash}
+    controller: App\Controller\SearchRequests\SearchRequestsController::searchRegionsVilles
+    methods: GET
+    requirements:
+        slash: /?
+
 # ==============================================================================
 # CatchAll (doit rester en dernier)
 # ==============================================================================

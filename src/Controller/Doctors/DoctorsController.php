@@ -119,8 +119,10 @@ class DoctorsController extends AbstractController
         // TODO: Ajouter les FTP pour les autres env (que PROD pour l'instant)
         if ($photo) {
             $path = $fileUploadHelper->upload($photo, 'avatars/doctors');
-            // delete l'ancienne photo du FTP
-            $fileUploadHelper->delete($doctor->getProfilePicture());
+            // delete l'ancienne photo du FTP 
+            if ($doctor->getProfilePicture()) {
+                $fileUploadHelper->delete($doctor->getProfilePicture());
+            }
 
             $doctor->setProfilePicture($path);
         }

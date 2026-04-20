@@ -54,9 +54,19 @@ class BusinessSitesRepository extends ServiceEntityRepository
     /**
      * Récupère un site par son nom exact
      */
-    public function findByName(string $name): ?BusinessSites
+    public function searchByName(string $name, int $max = 5): array
     {
-        return $this->findOneBy(['name' => $name]);
+        $name = '%' . strtolower($name) . '%';
+
+        return $this->createQueryBuilder('bs')
+            ->where('LOWER(bs.name) LIKE :name')
+            ->orWhere('LOWER(bs.ville) LIKE :name')
+            ->orWhere('LOWER(bs.address) LIKE :name')
+            ->setParameter('name', $name)
+            ->orderBy('bs.name', 'ASC')
+            ->setMaxResults($max)
+            ->getQuery()
+            ->getResult();
     }
 
     /**

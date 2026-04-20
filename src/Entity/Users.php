@@ -325,6 +325,11 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getFullName(): string
+    {
+        return $this->firstName . ' ' . $this->lastName;
+    }
+
     public function removePasswordResetToken(UsersPasswordResetToken $token): self
     {
         $this->passwordResetTokens->removeElement($token);

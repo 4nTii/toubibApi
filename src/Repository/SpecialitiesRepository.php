@@ -48,12 +48,15 @@ class SpecialitiesRepository extends ServiceEntityRepository
     /**
      * Recherche des spécialités contenant une chaîne de caractères
      */
-    public function searchByName(string $term): array
+    public function searchByName(string $name, int $max = 5): array
     {
+        $term = '%' . strtolower($name) . '%';
+
         return $this->createQueryBuilder('s')
-            ->andWhere('s.name LIKE :term')
-            ->setParameter('term', '%' . $term . '%')
+            ->where('LOWER(s.name) LIKE :term')
+            ->setParameter('term', $term)
             ->orderBy('s.name', 'ASC')
+            ->setMaxResults($max)
             ->getQuery()
             ->getResult();
     }

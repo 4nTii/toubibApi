@@ -153,21 +153,42 @@ class DoctorsRepository extends ServiceEntityRepository
     /**
      * Recherche des médecins actifs par nom (partial match)
      */
-    public function searchByName(string $name): array
+    public function searchByName(string $name, int $max = 5, ?bool $onlyActive = true): array
     {
-        return $this->createQueryBuilder('d')
+        $name = '%' . strtolower($name) . '%';
+
+        // recupérer les IDs avoid Doctrine trap
+        // JOIN + LIMIT ne limite pas les entities… mais les lignes SQL, alors 2 QueryBuilders 
+        $qb = $this->createQueryBuilder('d')
+            ->select('d.id')
             ->join('d.user', 'u')
-            ->addSelect('u')
-            ->andWhere('d.isActive = :active')
-            ->andWhere('u.firstName LIKE :name OR u.lastName LIKE :name')
-            ->setParameter('active', true)
-            ->setParameter('name', '%' . $name . '%')
-            ->leftJoin('d.speciality', 's')
-            ->addSelect('s')
-            ->leftJoin('d.doctorBusinessSites', 'dbs')
-            ->addSelect('dbs')
-            ->leftJoin('dbs.businessSite', 'bs')
-            ->addSelect('bs')
+            ->where('LOWER(u.firstName) LIKE :name OR LOWER(u.lastName) LIKE :name')
+            ->setParameter('name', $name);
+
+        if ($onlyActive !== null) {
+            $qb->andWhere('d.isActive = :active')
+                ->setParameter('active', $onlyActive);
+        }
+
+        $qb->orderBy('u.lastName', 'ASC')
+            ->setMaxResults($max);
+
+        $ids = array_column($qb->getQuery()->getScalarResult(), 'id');
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        // hydrate complet avoid Doctrine trap
+        return $this->createQueryBuilder('d')
+            ->where('d.id IN (:ids)')
+            ->setParameter('ids', $ids)
+
+            ->join('d.user', 'u')->addSelect('u')
+            ->leftJoin('d.speciality', 's')->addSelect('s')
+            ->leftJoin('d.doctorBusinessSites', 'dbs')->addSelect('dbs')
+            ->leftJoin('dbs.businessSite', 'bs')->addSelect('bs')
+
             ->orderBy('u.lastName', 'ASC')
             ->getQuery()
             ->getResult();

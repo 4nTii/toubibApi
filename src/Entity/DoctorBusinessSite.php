@@ -18,12 +18,12 @@ class DoctorBusinessSite
 
     #[ORM\ManyToOne(targetEntity: Doctors::class, inversedBy: 'doctorBusinessSites')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    #[Groups(['businesssite:read'])]
+    #[Groups(['businesssite:read', 'doctor:search'])]
     private ?Doctors $doctor = null;
 
     #[ORM\ManyToOne(targetEntity: BusinessSites::class, inversedBy: 'doctorBusinessSites')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    #[Groups(['doctor:read'])]
+    #[Groups(['doctor:read', 'doctor:search'])]
     private ?BusinessSites $businessSite = null;
 
     #[ORM\Column(name: 'is_owner', type: 'boolean')]

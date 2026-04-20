@@ -2,55 +2,132 @@
 
 namespace App\Controller\SearchRequests;
 
+use App\Entity\Doctors;
+use App\Repository\BusinessSitesRepository;
+use App\Repository\DoctorBusinessSiteRepository;
+use App\Repository\DoctorsRepository;
+use App\Repository\RegionsRepository;
+use App\Repository\SpecialitiesRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class SearchRequestsController extends AbstractController
 {
-    public function searchDoctorsBusinessSitesSpecialty(Request $request): JsonResponse
-    {
+    public function searchDoctorsBusinessSitesSpecialty(
+        Request $request,
+        DoctorsRepository $doctorsRepository,
+        BusinessSitesRepository $businessSitesRepository,
+        SpecialitiesRepository $specialitiesRepository
+    ): JsonResponse {
         $value = strtolower($request->query->get('value', ''));
 
-        $doctors = ['Dr Martin', 'Dr Durand', 'Dr Bernard'];
-        $specialities = ['Cardiologie', 'Dermatologie', 'Pédiatrie'];
-        $businessSites = ['Cabinet Central', 'Clinique Saint-Jean', 'Centre Médical Lyon'];
-        $cities = ['Annecy', 'Lyon', 'Paris'];
-        $countries = ['France'];
-        $images = ['/img/1.png', '/img/2.png', '/img/3.png'];
+        if (strlen($value) < 2) {
+            return $this->json([
+                'status' => true,
+                'query' => $value,
+                'data' => []
+            ], 200);
+        }
 
-        $data = [];
+        $result = [];
+        // voir la route elle n'est pas fini preparer toutes les information necessaire Docteur, etablissement, specialité
+        $doctors = $doctorsRepository->searchByName($value, 3, true);
+        $result['doctors'] = [];
+        $businessSites = $businessSitesRepository->searchByName($value, 3);
+        $result['businessSite'] = [];
+        $specialities = $specialitiesRepository->searchByName($value, 3);
+        $result['specialities'] = [];
 
-        for ($i = 0; $i < 5; $i++) {
+        foreach ($doctors as $doctor) {
+            $user = $doctor->getUser();
 
-            $type = ['doctor', 'speciality', 'businessSite'][array_rand([0, 1, 2])];
+            $cities = array_unique(array_map(
+                fn($dbs) => $dbs->getBusinessSite()->getVille(),
+                $doctor->getDoctorBusinessSites()->toArray()
+            ));
 
-            if ($type === 'doctor') {
-                $name = $doctors[array_rand($doctors)];
-            } elseif ($type === 'speciality') {
-                $name = $specialities[array_rand($specialities)];
-            } else {
-                $name = $businessSites[array_rand($businessSites)];
+            $result['doctors'][] = [
+                'id' => $doctor->getId(),
+                'name' => $user->getFullName(),
+                'gender' => $user->getGender(),
+                'speciality' => $doctor->getSpeciality()?->getName(),
+                'image' => $doctor->getProfilePicture(),
+                'cities' => array_values($cities)
+            ];
+        }
+
+        foreach ($businessSites as $businessSite) {
+            $result['businessSite'][] = [
+                'id' => $businessSite->getId(),
+                'name' => $businessSite->getName(),
+                'ville' => $businessSite->getVille(),
+            ];
+        }
+        foreach ($specialities as $specialitie) {
+            $result['specialities'][] = [
+                'id' => $specialitie->getId(),
+                'name' => $specialitie->getName(),
+            ];
+        }
+
+        if (empty($doctors) && !empty($specialities)) {
+            $specialitie = $specialities[0];
+            $doctors = $doctorsRepository->findBySpecialty($specialitie);
+            foreach ($doctors as $doctor) {
+                if ($doctor->isActive()) {
+                    $user = $doctor->getUser();
+
+                    $cities = array_unique(array_map(
+                        fn($dbs) => $dbs->getBusinessSite()->getVille(),
+                        $doctor->getDoctorBusinessSites()->toArray()
+                    ));
+
+                    $result['doctors'][] = [
+                        'id' => $doctor->getId(),
+                        'name' => $user->getFullName(),
+                        'gender' => $user->getGender(),
+                        'speciality' => $doctor->getSpeciality()?->getName(),
+                        'image' => $doctor->getProfilePicture(),
+                        'cities' => array_values($cities)
+                    ];
+                }
             }
+        }
 
-            // fake "match" logic (simple)
-            if ($value && stripos($name, $value) === false) {
-                $name .= ' ' . $value;
-            }
+        return $this->json([
+            'status' => true,
+            'query' => $value,
+            'data' => $result
+        ], 200);
+    }
 
-            $data[] = [
-                'type' => $type,
-                'title' => $name,
-                'country' => $countries[array_rand($countries)],
-                'ville' => $cities[array_rand($cities)],
-                'image' => $images[array_rand($images)]
+    public function searchRegionsVilles(
+        Request $request,
+        RegionsRepository $regionsRepository
+    ): JsonResponse {
+        $value = strtolower($request->query->get('value', ''));
+        $result = [];
+        if (strlen($value) < 2) {
+            return $this->json([
+                'status' => true,
+                'query' => $value,
+                'data' => []
+            ]);
+        }
+
+        $regions = $regionsRepository->searchByName($value);
+        foreach ($regions as $region) {
+            $result['region'][] = [
+                'id' => $region->getId(),
+                'name' => $region->getName()
             ];
         }
 
         return $this->json([
             'status' => true,
             'query' => $value,
-            'data' => $data
-        ]);
+            'data' => $result
+        ], 200);
     }
 }
