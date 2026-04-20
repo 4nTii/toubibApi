@@ -2,6 +2,7 @@
 
 namespace App\Controller\BusinessSites;
 
+use App\DTO\CreateBusinessSiteDTO;
 use App\Entity\DoctorBusinessSite;
 use App\Entity\Users;
 use App\Repository\BusinessSitesRepository;
@@ -13,9 +14,92 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class BusinessSitesController extends AbstractController
 {
+    public function createBusinessSite(
+        Request $request,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator,
+        EntityManagerInterface $entityManager,
+        DoctorsRepository $doctorsRepository,
+        RegionsRepository $regionsRepository
+    ): JsonResponse {
+
+        try {
+            /** @var CreateBusinessSiteDTO $dto */
+            $dto = $serializer->deserialize(
+                $request->getContent(),
+                CreateBusinessSiteDTO::class,
+                'json'
+            );
+        } catch (\Exception $e) {
+            return $this->json([
+                'status' => false,
+                'message' => 'JSON invalide'
+            ], 400);
+        }
+
+        // Validation
+        $errors = $validator->validate($dto);
+
+        if (count($errors) > 0) {
+            $formattedErrors = [];
+            foreach ($errors as $error) {
+                $formattedErrors[] = $error->getPropertyPath() . ' : ' . $error->getMessage();
+            }
+
+            return $this->json([
+                'status' => false,
+                'errors' => $formattedErrors
+            ], 400);
+        }
+
+        /** @var Users $user */
+        $user = $this->getUser();
+        $doctor = $doctorsRepository->findOneBy(['user' => $user]);
+
+        if (!$doctor) {
+            return $this->json(['status' => false, 'message' => 'Non autorisé'], 403);
+        }
+
+        $region = $regionsRepository->find($dto->region);
+        if (!$region) {
+            return $this->json(['status' => false, 'message' => 'Région invalide'], 404);
+        }
+
+        // Création
+        $businessSite = new \App\Entity\BusinessSites();
+        $businessSite->setName($dto->name);
+        $businessSite->setAddress($dto->address);
+        $businessSite->setVille($dto->ville);
+        $businessSite->setPhone($dto->phone);
+        $businessSite->setEmail($dto->email);
+        $businessSite->setRegion($region);
+
+        $entityManager->persist($businessSite);
+
+        $dbs = new \App\Entity\DoctorBusinessSite();
+        $dbs->setDoctor($doctor);
+        $dbs->setBusinessSite($businessSite);
+        $dbs->setIsOwner(true);
+        $dbs->setIsPrimary(true);
+
+        $dbs->setConsultationDuration($dto->doctorBusinessSite->consultationDuration);
+        $dbs->setConsultationFee($dto->doctorBusinessSite->consultationFee);
+        $dbs->setWorkingSchedule($dto->doctorBusinessSite->workingSchedule);
+
+        $entityManager->persist($dbs);
+        $entityManager->flush();
+
+        return $this->json([
+            'status' => true,
+            'message' => 'Cabinet créé avec succès'
+        ], 201);
+    }
+
     public function updateBusinessSites(
         Request $request,
         EntityManagerInterface $entityManager,

@@ -20,7 +20,8 @@ security:
             jwt: ~
 
     access_control:
-        - { path: ^/api/?$, roles: PUBLIC_ACCESS }
+        - { path: ^/api, methods: [OPTIONS], roles: PUBLIC_ACCESS }
+        - { path: ^/api/search, roles: PUBLIC_ACCESS }
         - { path: ^/api/status/?$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/login/?$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/logout/?$, roles: PUBLIC_ACCESS }

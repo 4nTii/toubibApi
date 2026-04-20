@@ -1,13 +1,9 @@
 # yaml-language-server: $schema=../vendor/symfony/routing/Loader/schema/routing.schema.json
 
-# This file is the entry point to configure the routes of your app.
-# Methods with the #[Route] attribute are automatically imported.
-# See also https://symfony.com/doc/current/routing.html
+# ==============================================================================
+# API Status
+# ==============================================================================
 
-# To list all registered routes, run the following command:
-#   bin/console debug:router
-
-# API Main routes
 app_status_api:
     path: /api/status{slash}
     controller: App\Controller\AppConfigController::status
@@ -22,7 +18,10 @@ app_api:
     requirements:
         slash: /?
 
+# ==============================================================================
 # Authentification
+# ==============================================================================
+
 app_auth_login:
     path: /api/auth/login{slash}
     controller: App\Controller\Auth\AuthController::login
@@ -31,9 +30,11 @@ app_auth_login:
         slash: /?
 
 app_auth_logout:
-    path: /api/auth/logout
+    path: /api/auth/logout{slash}
     controller: App\Controller\Auth\AuthController::logout
     methods: POST
+    requirements:
+        slash: /?
 
 app_auth_register:
     path: /api/auth/register{slash}
@@ -56,7 +57,7 @@ app_auth_forgot_password:
     requirements:
         slash: /?
 
-app_auth_verify_token:
+app_auth_check_reset_token:
     path: /api/auth/check-reset-token{slash}
     controller: App\Controller\Auth\AuthController::checkResetToken
     methods: POST
@@ -70,7 +71,10 @@ app_auth_reset_password:
     requirements:
         slash: /?
 
-# User
+# ==============================================================================
+# Users
+# ==============================================================================
+
 app_user_me:
     path: /api/users/me{slash}
     controller: App\Controller\User\ProfileController::me
@@ -85,35 +89,49 @@ app_user_update:
     requirements:
         slash: /?
 
+# ==============================================================================
 # Doctors
-app_doctors_getAll:
+# ==============================================================================
+
+app_doctors_get_all:
     path: /api/doctor{slash}
     controller: App\Controller\Doctors\DoctorsController::getAllDoctors
     methods: GET
     requirements:
         slash: /?
 
-app_doctors_getConnectedDoctor:
+app_doctors_get_me:
     path: /api/doctor/me{slash}
     controller: App\Controller\Doctors\DoctorsController::getConnectedDoctor
     methods: GET
     requirements:
         slash: /?
 
-app_doctors_updateProfileDoctor:
+app_doctors_update_me:
     path: /api/doctor/me{slash}
     controller: App\Controller\Doctors\DoctorsController::updateConnectedDoctor
     methods: PATCH
     requirements:
         slash: /?
 
-# BusinessSites and DoctorsBusinessSites
-app_businesssites_getby_id:
+# ==============================================================================
+# BusinessSites
+# ==============================================================================
+
+app_businesssites_create:
+    path: /api/businesssites{slash}
+    controller: App\Controller\BusinessSites\BusinessSitesController::createBusinessSite
+    methods: POST
+    requirements:
+        slash: /?
+
+app_businesssites_get_by_id:
     path: /api/businesssites/{businesssitesId}{slash}
     controller: App\Controller\BusinessSites\BusinessSitesController::getBusinessSites
     methods: GET
     requirements:
         slash: /?
+        businesssitesId: \d+
 
 app_businesssites_update:
     path: /api/businesssites/{businesssitesId}{slash}
@@ -121,15 +139,39 @@ app_businesssites_update:
     methods: PATCH
     requirements:
         slash: /?
+        businesssitesId: \d+
 
-app_businesssites_delete:
-    path: /api/businesssites/{businesssitesId}/doctor/{doctorId}{slash}
+app_businesssites_delete_doctor:
+    path: /api/businesssites/{businesssitesId}/doctor/{targetDoctorBusinessSiteId}{slash}
     controller: App\Controller\BusinessSites\BusinessSitesController::deleteDoctorFromBusinessSite
     methods: DELETE
     requirements:
         slash: /?
+        businesssitesId: \d+
+        targetDoctorBusinessSiteId: \d+
 
-# CatchAll
+# ==============================================================================
+# Search
+# ==============================================================================
+
+app_search_doc_bus_spec:
+    path: /api/search{slash}
+    controller: App\Controller\SearchRequests\SearchRequestsController::searchDoctorsBusinessSitesSpecialty
+    methods: GET
+    requirements:
+        slash: /?
+
+app_search_region_ville:
+    path: /api/searchgeo{slash}
+    controller: App\Controller\SearchRequests\SearchRequestsController::searchRegionsVilles
+    methods: GET
+    requirements:
+        slash: /?
+
+# ==============================================================================
+# CatchAll (doit rester en dernier)
+# ==============================================================================
+
 app_catch_all_api:
     path: /api/doctors/{url}
     controller: App\Controller\AppConfigController::catchAllApi
@@ -144,7 +186,7 @@ app_catch_all:
     requirements:
         url: ".+"
 
-app_default_rout:
+app_default_route:
     path: /
     controller: App\Controller\DefaultController::catchAll
     methods: GET

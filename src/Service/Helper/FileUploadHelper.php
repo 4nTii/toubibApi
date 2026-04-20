@@ -114,19 +114,28 @@ class FileUploadHelper
     public function delete(string $relativePath): bool
     {
         $relativePath = ltrim($relativePath, '/');
-
         if (str_contains($relativePath, '..')) {
             throw new \Exception('Path traversal détecté');
         }
 
         $conn = $this->connect();
-
         $filePath = $this->baseDir . '/' . $relativePath;
 
-        $result = \ftp_delete($conn, $filePath);
+        // si le fichier existe
+        $fileSize = @ftp_size($conn, $filePath);
+        if ($fileSize === -1) {
+            ftp_close($conn);
+            throw new \Exception("Fichier introuvable sur le FTP: $filePath");
+        }
 
-        \ftp_close($conn);
+        // gestion du warning de ftp_delete si il retourne false
+        if (!@ftp_delete($conn, $filePath)) {
+            ftp_close($conn);
+            throw new \Exception("Échec de suppression FTP: $filePath");
+        }
 
-        return $result;
+        ftp_close($conn);
+
+        return true;
     }
 }

@@ -57,4 +57,17 @@ class RegionsRepository extends ServiceEntityRepository
     {
         return $this->findOneBy(['name' => $name]);
     }
+
+    public function searchByName(string $term, int $max = 5): array
+    {
+        $term = '%' . strtolower($term) . '%';
+
+        return $this->createQueryBuilder('r')
+            ->where('LOWER(r.name) LIKE :term')
+            ->setParameter('term', $term)
+            ->orderBy('r.name', 'ASC')
+            ->setMaxResults($max)
+            ->getQuery()
+            ->getResult();
+    }
 }
