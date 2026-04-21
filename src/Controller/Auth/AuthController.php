@@ -32,9 +32,10 @@ class AuthController extends AbstractController
         LoggingAttemptRepository $loggingAttemptRepository,
         LoggingSecurityService $loggingSecurity
     ): JsonResponse {
-        $data         = json_decode($request->getContent(), true);
-        $userAgent    = $request->headers->get('User-Agent');
-        $userIp       = $request->getClientIp();
+        $data = json_decode($request->getContent(), true);
+        $userAgent = $request->headers->get('User-Agent');
+        $userIp = $request->getClientIp();
+        $origin = $request->headers->get('origin');
 
         if (!isset($data['username'], $data['password'])) {
             $loggingAttemptRepository->add(new LoggingAttempt(null, $userIp, $userAgent), true);
@@ -58,6 +59,13 @@ class AuthController extends AbstractController
                 'status'  => false,
                 'message' => 'Identifiants invalides',
             ], 401);
+        }
+
+        if ($origin === $_ENV['BO_CLIENT_URL']) {
+            return $this->json([
+                'status'  => false,
+                'message' => 'DOCTOR',
+            ], 403);
         }
 
         if (!$user->isActive()) {

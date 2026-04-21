@@ -92,6 +92,12 @@ app_user_update:
 # ==============================================================================
 # Doctors
 # ==============================================================================
+app_doctors_login:
+    path: /api/auth/doctor/login{slash}
+    controller: App\Controller\Doctors\DoctorsController::login
+    methods: POST
+    requirements:
+        slash: /?
 
 app_doctors_get_all:
     path: /api/doctor{slash}
@@ -102,7 +108,7 @@ app_doctors_get_all:
 
 app_doctors_get_me:
     path: /api/doctor/me{slash}
-    controller: App\Controller\Doctors\DoctorsController::getConnectedDoctor
+    controller: App\Controller\Doctors\DoctorsController::me
     methods: GET
     requirements:
         slash: /?
