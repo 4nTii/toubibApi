@@ -24,6 +24,7 @@ security:
         - { path: ^/api/search, roles: PUBLIC_ACCESS }
         - { path: ^/api/status/?$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/login/?$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/doctor/login/?$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/logout/?$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/register/?$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/verify-account/?$, roles: PUBLIC_ACCESS }

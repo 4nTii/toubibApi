@@ -2,8 +2,6 @@
 
 namespace App\Controller\User;
 
-use App\Entity\Doctors as Doctor;
-use App\Repository\DoctorsRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -11,7 +9,7 @@ use Symfony\Component\HttpFoundation\Request as HttpFoundationRequest;
 
 class ProfileController extends AbstractController
 {
-    public function me(DoctorsRepository $doctorRepo): JsonResponse
+    public function me(): JsonResponse
     {
         /** @var \App\Entity\Users $user */
         $user = $this->getUser();
@@ -23,11 +21,8 @@ class ProfileController extends AbstractController
             ], 401);
         }
 
-        $doctor = $doctorRepo->findByUserId($user->getId());
-
         $userData = $this->json($user, 200, [], ['groups' => ['user:read']])->getContent();
         $userData = json_decode($userData, true);
-        $userData['isDoctor'] = $doctor !== null;
 
         $response = [
             'status' => true,
