@@ -37,6 +37,10 @@ class BusinessSites
     #[Groups(['doctor:read', 'businesssite:read'])]
     private ?string $email = null;
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['doctor:read', 'businesssite:read'])]
+    private string $locationGoogleMap;
+
     #[ORM\ManyToOne(targetEntity: Regions::class, inversedBy: 'businessSites')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['doctor:read', 'businesssite:read'])]
@@ -117,6 +121,17 @@ class BusinessSites
     public function setEmail(?string $email): self
     {
         $this->email = $email;
+        return $this;
+    }
+
+    public function getLocationGoogleMap(): ?string
+    {
+        return $this->locationGoogleMap;
+    }
+
+    public function setLocationGoogleMap(?string $locationGoogleMap): self
+    {
+        $this->locationGoogleMap = $locationGoogleMap;
         return $this;
     }
 

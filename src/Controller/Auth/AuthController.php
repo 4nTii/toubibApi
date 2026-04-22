@@ -61,13 +61,6 @@ class AuthController extends AbstractController
             ], 401);
         }
 
-        if ($origin === $_ENV['BO_CLIENT_URL']) {
-            return $this->json([
-                'status'  => false,
-                'message' => 'DOCTOR',
-            ], 403);
-        }
-
         if (!$user->isActive()) {
             return $this->json([
                 'status'  => false,
