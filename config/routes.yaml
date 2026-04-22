@@ -120,6 +120,14 @@ app_doctors_update_me:
     requirements:
         slash: /?
 
+app_doctors_get_doctor:
+    path: /api/doctor/{id}{slash}
+    controller: App\Controller\Doctors\DoctorsController::getDoctorInfo
+    methods: GET
+    requirements:
+        slash: /?
+        id: '\d+'
+
 # ==============================================================================
 # BusinessSites
 # ==============================================================================

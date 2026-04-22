@@ -104,8 +104,10 @@ class DoctorsController extends AbstractController
         return $response;
     }
 
-    public function getAllDoctors(Request $request, DoctorsRepository $doctorsRepository): JsonResponse
-    {
+    public function getAllDoctors(
+        Request $request,
+        DoctorsRepository $doctorsRepository
+    ): JsonResponse {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 5);
         $doctors = $doctorsRepository->getAllDoctors($page, $limit);
@@ -130,7 +132,7 @@ class DoctorsController extends AbstractController
         return $this->json($response, 200, [], ['groups' => ['doctor:read']]);
     }
 
-    public function me(DoctorsRepository $doctorsRepository, Request $request): JsonResponse
+    public function me(DoctorsRepository $doctorsRepository): JsonResponse
     {
         /** @var Users $user */
         $user = $this->getUser();
@@ -161,6 +163,26 @@ class DoctorsController extends AbstractController
         ];
 
         return $this->json($response, 200, [], ['groups' => ['doctor:read']]);
+    }
+
+    public function getDoctorInfo(
+        int $id,
+        DoctorsRepository $doctorsRepository
+    ): JsonResponse {
+
+        $doctor = $doctorsRepository->find($id);
+
+        if (!$doctor) {
+            return $this->json([
+                'status'  => false,
+                'message' => 'Cet utilisateur ne correspond pas à un médecin'
+            ], 404);
+        }
+
+        return $this->json([
+            'status' => true,
+            'data'   => $doctor
+        ], 200, [], ['groups' => ['doctor:read']]);
     }
 
     public function updateConnectedDoctor(
