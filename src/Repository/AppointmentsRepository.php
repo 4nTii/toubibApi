@@ -117,4 +117,46 @@ class AppointmentsRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Récupère les rendez-vous d'un médecin pour un jour donné et un cabinet
+     */
+    public function getScheduleByDate(
+        Doctors $doctor,
+        BusinessSites $businessSite,
+        \DateTimeInterface $date,
+        bool $excludeLunch = true
+    ): array {
+
+        $date = \DateTimeImmutable::createFromInterface($date);
+
+        $dayStart = $date->setTime(0, 0, 0);
+        $dayEnd   = $date->setTime(23, 59, 59);
+
+        $qb = $this->createQueryBuilder('a')
+            ->andWhere('a.doctor = :doctor')
+            ->andWhere('a.businessSite = :site')
+            ->andWhere('a.startTime BETWEEN :start AND :end')
+            ->setParameter('doctor', $doctor)
+            ->setParameter('site', $businessSite)
+            ->setParameter('start', $dayStart)
+            ->setParameter('end', $dayEnd);
+
+        // 🔥 Optionnel : exclure la pause déjeuner
+        if ($excludeLunch) {
+            $lunchStart = $date->setTime(12, 0, 0);
+            $lunchEnd   = $date->setTime(14, 0, 0);
+
+            $qb->andWhere(
+                '(a.endTime <= :lunchStart OR a.startTime >= :lunchEnd)'
+            )
+                ->setParameter('lunchStart', $lunchStart)
+                ->setParameter('lunchEnd', $lunchEnd);
+        }
+
+        return $qb
+            ->orderBy('a.startTime', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }
