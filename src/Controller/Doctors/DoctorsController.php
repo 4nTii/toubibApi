@@ -4,10 +4,12 @@ namespace App\Controller\Doctors;
 
 use App\Entity\LoggingAttempt;
 use App\Entity\Users;
+use App\Repository\BusinessSitesRepository;
 use App\Repository\DoctorsRepository;
 use App\Repository\LoggingAttemptRepository;
 use App\Repository\UsersRepository;
 use App\Service\Auth\LoggingSecurityService;
+use App\Service\Helper\AppointmentsHelper;
 use App\Service\Helper\FileUploadHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -167,7 +169,9 @@ class DoctorsController extends AbstractController
 
     public function getDoctorInfo(
         int $id,
-        DoctorsRepository $doctorsRepository
+        DoctorsRepository $doctorsRepository,
+        BusinessSitesRepository $businessSitesRepository,
+        AppointmentsHelper $appointmentsHelper
     ): JsonResponse {
 
         $doctor = $doctorsRepository->find($id);
@@ -179,9 +183,27 @@ class DoctorsController extends AbstractController
             ], 404);
         }
 
+        $response = [
+            'doctor' => $doctor
+        ];
+
+        // recuperer les prochain créneaux de disponibilité du docteur
+
+        if ($doctor->isActive()) {
+            $dateStart = new \DateTimeImmutable('now');
+            $dateEnd = $dateStart->modify('+6 days');
+            $availableSlots = $appointmentsHelper->getSlotsByDates(
+                $doctor,
+                $businessSitesRepository->getPrimaryBusinessSite($doctor),
+                [$dateStart, $dateEnd],
+                true
+            );
+            $response['availableSlot'] = $availableSlots;
+        }
+
         return $this->json([
             'status' => true,
-            'data'   => $doctor
+            'data'   => $response
         ], 200, [], ['groups' => ['doctor:read']]);
     }
 

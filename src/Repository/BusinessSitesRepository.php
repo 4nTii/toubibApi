@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\BusinessSites;
+use App\Entity\Doctors;
 use App\Entity\Regions;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -82,5 +83,22 @@ class BusinessSitesRepository extends ServiceEntityRepository
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Récupère le businessSite principal
+     */
+    public function getPrimaryBusinessSite(Doctors $doctor): ?BusinessSites
+    {
+        return $this->getEntityManager()
+            ->getRepository(BusinessSites::class)
+            ->createQueryBuilder('bs')
+            ->innerJoin('bs.doctorBusinessSites', 'dbs')
+            ->andWhere('dbs.doctor = :doctor')
+            ->andWhere('dbs.isPrimary = true')
+            ->setParameter('doctor', $doctor)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }
