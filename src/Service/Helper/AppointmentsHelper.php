@@ -6,6 +6,7 @@ use App\Repository\DoctorBusinessSiteRepository;
 use App\Repository\AppointmentsRepository;
 use App\Entity\Doctors;
 use App\Entity\BusinessSites;
+use App\Entity\DoctorBusinessSite;
 
 class AppointmentsHelper
 {
@@ -26,19 +27,27 @@ class AppointmentsHelper
         \DateTimeImmutable|array $date,
         bool $excludeLunch = true
     ): array {
-        $dates = $this->resolveDates($date);
+        $doctorBusinessSite = $this->dbsRepository->findOneBy([
+            'doctor'       => $doctor,
+            'businessSite' => $businessSite
+        ]);
 
+        if (!$doctorBusinessSite) {
+            return [];
+        }
+
+        $dates = $this->resolveDates($date);
         if (empty($dates)) {
             return [];
         }
 
         if (count($dates) === 1) {
-            return $this->getSlotsForDate($doctor, $businessSite, $dates[0], $excludeLunch);
+            return $this->getSlotsForDate($doctorBusinessSite, $dates[0], $excludeLunch);
         }
 
         $result = [];
         foreach ($dates as $dateObj) {
-            $slots = $this->getSlotsForDate($doctor, $businessSite, $dateObj, $excludeLunch);
+            $slots = $this->getSlotsForDate($doctorBusinessSite, $dateObj, $excludeLunch);
             if (!empty($slots)) {
                 $result[$dateObj->format('Y-m-d')] = $slots;
             }
@@ -96,20 +105,10 @@ class AppointmentsHelper
      * @return array [['start' => 'H:i', 'end' => 'H:i'], ...]
      */
     private function getSlotsForDate(
-        Doctors $doctor,
-        BusinessSites $businessSite,
+        DoctorBusinessSite $doctorBusinessSite,
         \DateTimeImmutable $dateObj,
         bool $excludeLunch
     ): array {
-        $doctorBusinessSite = $this->dbsRepository->findOneBy([
-            'doctor'       => $doctor,
-            'businessSite' => $businessSite
-        ]);
-
-        if (!$doctorBusinessSite) {
-            return [];
-        }
-
         $schedule = $doctorBusinessSite->getWorkingSchedule();
         $duration = $doctorBusinessSite->getConsultationDuration();
 
@@ -139,8 +138,8 @@ class AppointmentsHelper
         }
 
         $appointments = $this->appointmentRepository->getScheduleByDate(
-            $doctor,
-            $businessSite,
+            $doctorBusinessSite->getDoctor(),
+            $doctorBusinessSite->getBusinessSite(),
             $dateObj,
             $excludeLunch
         );
