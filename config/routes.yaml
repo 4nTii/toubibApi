@@ -183,6 +183,17 @@ app_search_region_ville:
         slash: /?
 
 # ==============================================================================
+# Search
+# ==============================================================================
+
+app_available_appointment:
+    path: /api/doctor/{id}/get-appointment/start/{startDate}/end/{endDate}{slash}
+    controller: App\Controller\Doctors\DoctorsAppointment::getDoctorAvailableAppointment
+    methods: GET
+    requirements:
+        slash: /?
+
+# ==============================================================================
 # CatchAll (doit rester en dernier)
 # ==============================================================================
 
