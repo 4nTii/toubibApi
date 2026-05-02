@@ -24,6 +24,12 @@ security:
         - { path: ^/api/status/?$, roles: PUBLIC_ACCESS }
         - { path: ^/api/search, roles: PUBLIC_ACCESS }
         - { path: ^/api/doctor/\d+, roles: PUBLIC_ACCESS }
+        - {
+              path: ^/api/businesssites/\d+,
+              roles: PUBLIC_ACCESS,
+              methods: [GET],
+          }
+        - { path: ^/api/businesssites/\d+, roles: ROLE_USER }
         - { path: ^/api/auth/login/?$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/doctor/login/?$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/logout/?$, roles: PUBLIC_ACCESS }

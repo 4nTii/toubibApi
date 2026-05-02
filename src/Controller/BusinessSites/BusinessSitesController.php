@@ -264,11 +264,9 @@ class BusinessSitesController extends AbstractController
                 'doctorId' => $doctor->getId(),
                 'firstName' => $user->getFirstName(),
                 'lastName' => $user->getLastName(),
-                'email' => $user->getEmail(),
-                'isOwner' => $dbs->isOwner(),
-                'isPrimary' => $dbs->isPrimary(),
-                'consultationDuration' => $dbs->getConsultationDuration(),
-                'consultationFee' => $dbs->getConsultationFee(),
+                'profilePicture' => $doctor->getProfilePicture(),
+                'biography' => $doctor->getBiography(),
+                'speciality' => $doctor->getSpeciality()->getName(),
                 'workingSchedule' => $dbs->getWorkingSchedule(),
             ];
         }, $doctorBusinessSites);

@@ -173,9 +173,7 @@ class DoctorsController extends AbstractController
         BusinessSitesRepository $businessSitesRepository,
         AppointmentsHelper $appointmentsHelper
     ): JsonResponse {
-
         $doctor = $doctorsRepository->find($id);
-
         if (!$doctor) {
             return $this->json([
                 'status'  => false,
@@ -184,21 +182,24 @@ class DoctorsController extends AbstractController
         }
 
         $response = [
-            'doctor' => $doctor
+            'doctor'         => $doctor,
+            'availableSlots' => []
         ];
 
-        // recuperer les prochain créneaux de disponibilité du docteur
-
         if ($doctor->isActive()) {
-            $dateStart = new \DateTimeImmutable('now');
-            $dateEnd = $dateStart->modify('+6 days');
-            $availableSlots = $appointmentsHelper->getSlotsByDates(
-                $doctor,
-                $businessSitesRepository->getPrimaryBusinessSite($doctor),
-                [$dateStart, $dateEnd],
-                true
-            );
-            $response['availableSlot'] = $availableSlots;
+            $primaryBusinessSite = $businessSitesRepository->getPrimaryBusinessSite($doctor);
+
+            if ($primaryBusinessSite) {
+                $dateStart = new \DateTimeImmutable('now');
+                $dateEnd   = $dateStart->modify('+6 days');
+
+                $response['availableSlots'] = $appointmentsHelper->getSlotsByDates(
+                    $doctor,
+                    $primaryBusinessSite,
+                    [$dateStart, $dateEnd],
+                    true
+                );
+            }
         }
 
         return $this->json([
