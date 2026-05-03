@@ -23,7 +23,7 @@ security:
         - { path: ^/api, methods: [OPTIONS], roles: PUBLIC_ACCESS }
         - { path: ^/api/status/?$, roles: PUBLIC_ACCESS }
         - { path: ^/api/search, roles: PUBLIC_ACCESS }
-        - { path: ^/api/doctor/\d+, roles: PUBLIC_ACCESS }
+        - { path: ^/api/doctor/\d+/?$, roles: PUBLIC_ACCESS }
         - {
               path: ^/api/businesssites/\d+,
               roles: PUBLIC_ACCESS,
