@@ -193,6 +193,14 @@ app_available_appointment:
     requirements:
         slash: /?
 
+app_set_appointment:
+    path: /api/doctor/{idDoctor}/set-appointment{slash}
+    controller: App\Controller\Doctors\DoctorsAppointment::setAppointment
+    methods: POST
+    requirements:
+        slash: /?
+        idDoctor: \d+
+
 # ==============================================================================
 # CatchAll (doit rester en dernier)
 # ==============================================================================
