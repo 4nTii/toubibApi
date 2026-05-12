@@ -1,136 +1,148 @@
-# ============================================================
-#  Makefile — Symfony Setup (cross-platform)
-# ============================================================
+.PHONY: all help build up down restart logs logs-app shell db-shell \
+        migrate migrate-diff fixtures cache-clear \
+        jwt-keys jwt-keys-force composer-install composer-update \
+        setup prod-up prod-deploy
 
-.PHONY: all install setup parameters jwt cache-clear dev server-stop wamp help
+# --- Default target: full install and start -----------------------------------
 
-# ── Détection OS ────────────────────────────────────────────
-ifeq ($(OS),Windows_NT)
-  PLATFORM = windows
-else
-  PLATFORM = unix
-endif
-
-WAMP_EXE = D:\wamp64\wampmanager.exe
-
-# ── Cible par défaut : tout faire ───────────────────────────
-all: setup cache-clear wamp dev
-
-# ── Aide ────────────────────────────────────────────────────
-help:
-ifeq ($(PLATFORM),windows)
-	@echo.
-	@echo Commandes disponibles :
-	@echo   make             - setup complet + cache-clear + database + symfony serve
-	@echo   make setup       - parameters + composer install + jwt
-	@echo   make install     - composer install uniquement
-	@echo   make parameters  - cree parameters.yml depuis parameters.yml.dist
-	@echo   make jwt         - genere les cles JWT (lexik)
-	@echo   make cache-clear - vide le cache Symfony
-	@echo   make database    - lance server DB si non demarré
-	@echo   make dev         - lance le serveur Symfony
-	@echo   make server-stop - arrete le serveur Symfony
-	@echo.
-else
-	@echo ""
-	@echo "Commandes disponibles :"
-	@echo "  make             — setup complet + cache-clear + database + symfony serve"
-	@echo "  make setup       — parameters + composer install + jwt"
-	@echo "  make install     — composer install uniquement"
-	@echo "  make parameters  — crée parameters.yml depuis parameters.yml.dist"
-	@echo "  make jwt         — génère les clés JWT (lexik)"
-	@echo "  make cache-clear — vide le cache Symfony"
-	@echo "  make database    — lance server DB si non démarré (Windows uniquement)"
-	@echo "  make dev         — lance le serveur Symfony"
-	@echo "  make server-stop — arrête le serveur Symfony"
-	@echo ""
-endif
-
-# ── Setup complet ───────────────────────────────────────────
-setup: parameters install jwt
-	@echo Setup termine.
-
-# ── Création de parameters.yml depuis parameters.yml.dist ───
-ifeq ($(PLATFORM),windows)
-parameters:
-	@if not exist app\config\parameters.yml ( \
-		if exist app\config\parameters.yml.dist ( \
-			copy app\config\parameters.yml.dist app\config\parameters.yml > nul && \
-			echo [OK] parameters.yml cree depuis parameters.yml.dist && \
-			echo [!]  Pense a remplir les valeurs dans app/config/parameters.yml \
-		) else ( \
-			echo [!]  Aucun parameters.yml.dist trouve - parameters.yml non cree \
-		) \
-	) else ( \
-		echo [.]  parameters.yml deja present, rien a faire \
-	)
-else
-parameters:
-	@if [ ! -f app/config/parameters.yml ]; then \
-		if [ -f app/config/parameters.yml.dist ]; then \
-			cp app/config/parameters.yml.dist app/config/parameters.yml; \
-			echo "✔  parameters.yml créé depuis parameters.yml.dist"; \
-			echo "⚠  Pense à remplir les valeurs dans app/config/parameters.yml"; \
+all: ## Run everything: build -> up -> setup (migrate + jwt + cache)
+	@# -- 1. Copy .env if missing ------------------------------
+	@if [ ! -f .env ]; then \
+		if [ -f .env.docker ]; then \
+			cp .env.docker .env; \
+			echo "WARNING: .env created from .env.docker -- fill in the values then re-run make"; \
+			exit 1; \
 		else \
-			echo "⚠  Aucun parameters.yml.dist trouvé — parameters.yml non créé"; \
+			echo "ERROR: No .env file found. Create one before continuing."; \
+			exit 1; \
 		fi \
-	else \
-		echo "·  parameters.yml déjà présent, rien à faire"; \
 	fi
-endif
+	@# -- 2. Build images --------------------------------------
+	@echo ""
+	@echo "--- Building Docker images --------------------------"
+	docker compose build --build-arg http_proxy="" --build-arg https_proxy="" --build-arg HTTP_PROXY="" --build-arg HTTPS_PROXY="" --build-arg NO_PROXY="*"
+	@# -- 3. Start containers ----------------------------------
+	@echo ""
+	@echo "--- Starting containers -----------------------------"
+	docker compose up -d
+	@# -- 4. Wait for MySQL to be ready ------------------------
+	@echo "Waiting for MySQL..."
+	@until docker compose exec db mysqladmin ping -h localhost --silent 2>/dev/null; do \
+		printf '.'; sleep 2; \
+	done
+	@echo " ready"
+	@# -- 5. Application setup ---------------------------------
+	@echo ""
+	@echo "--- Application setup -------------------------------"
+	@# -- Composer install -----------------------------------
+	@echo "-- Composer install -----------------------------------------"
+	@$(MAKE) --no-print-directory composer-install
+	@$(MAKE) --no-print-directory setup
+	@# -- 6. Summary -------------------------------------------
+	@echo ""
+	@echo "-----------------------------------------------------"
+	@echo "  Toubib is ready"
+	@echo ""
+	@echo "  API   -> http://localhost:8000"
+	@echo "  Mails -> http://localhost:8025"
+	@echo ""
+	@echo "  Run 'make help' to see all available commands"
+	@echo "-----------------------------------------------------"
 
-# ── Installation des dépendances Composer ───────────────────
-install:
-	@echo Installation des dependances Composer...
-	@composer install
-	@echo composer install termine.
+# --- Help ---------------------------------------------------------------------
 
-# ── Génération des clés JWT (lexik/jwt-authentication-bundle)
-ifeq ($(PLATFORM),windows)
-jwt:
-	@if not exist config\jwt\private.pem ( \
-		echo [.]  Generation des cles JWT... && \
-		php bin/console lexik:jwt:generate-keypair && \
-		echo [OK] Cles JWT generees dans config/jwt/ \
-	) else ( \
-		echo [.]  Cles JWT deja presentes, rien a faire \
-	)
-else
-jwt:
-	@if [ ! -f config/jwt/private.pem ]; then \
-		echo "·  Génération des clés JWT..."; \
-		php bin/console lexik:jwt:generate-keypair; \
-		echo "✔  Clés JWT générées dans config/jwt/"; \
-	else \
-		echo "·  Clés JWT déjà présentes, rien à faire"; \
-	fi
-endif
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
-# ── Vidage du cache Symfony ──────────────────────────────────
-cache-clear:
-	@echo Vidage du cache Symfony...
-	@php bin/console cache:clear
-	@echo Cache vide.
+# --- Docker lifecycle ---------------------------------------------------------
 
-# ── Lancement de Database si non démarré (Windows only) ───
-# ── Ajoutez votre propre base de données, ou commenter ce block en cas de base en ligne via .env ───
-ifeq ($(PLATFORM),windows)
-wamp:
-	@tasklist /FI "IMAGENAME eq wampmanager.exe" 2>nul | find /I "wampmanager.exe" >nul \
-		&& echo [.]  DatabaseServer deja en cours d'execution, rien a faire \
-		|| (echo [.]  Demarrage de DatabaseServer... && start "" "$(WAMP_EXE)" && echo [OK] DatabaseServer demarre)
-else
-wamp:
-	@echo "·  DatabaseServer est une application Windows uniquement, ignoré."
-endif
+build: ## Build Docker images
+	docker compose build --no-cache --build-arg http_proxy="" --build-arg https_proxy="" --build-arg HTTP_PROXY="" --build-arg HTTPS_PROXY="" --build-arg NO_PROXY="*"
 
-# ── Lancement du serveur Symfony ────────────────────────────
-dev:
-	@echo Demarrage du serveur Symfony...
-	@symfony serve
+up: ## Start containers (dev)
+	docker compose up -d
+	@echo "App    : http://localhost:8000"
+	@echo "Mails  : http://localhost:8025"
 
-# ── Arrêt du serveur Symfony ─────────────────────────────────
-server-stop:
-	@echo Arret du serveur Symfony...
-	@symfony server:stop
-	@echo Serveur Symfony arrete.
+down: ## Stop and remove containers
+	docker compose down
+
+restart: ## Restart containers
+	docker compose restart
+
+logs: ## Follow all container logs
+	docker compose logs -f
+
+logs-app: ## Follow PHP container logs only
+	docker compose logs -f app
+
+# --- Container access ---------------------------------------------------------
+
+shell: ## Open a shell in the PHP container
+	docker compose exec app bash
+
+db-shell: ## Open a MySQL shell
+	docker compose exec db mysql -u $${DB_USER:-toubib_user} -p$${DB_PASSWORD:-toubib_password} $${DB_NAME:-toubib}
+
+redis-cli: ## Open a Redis CLI
+	docker compose exec redis redis-cli -a $${REDIS_PASSWORD:-redis_password}
+
+# --- Symfony ------------------------------------------------------------------
+
+migrate: ## Run Doctrine migrations
+	docker compose exec app php bin/console doctrine:migrations:migrate --no-interaction
+
+migrate-diff: ## Generate a migration from entities
+	docker compose exec app php bin/console doctrine:migrations:diff
+
+fixtures: ## Load fixtures (dev)
+	docker compose exec app php bin/console doctrine:fixtures:load --no-interaction
+
+cache-clear: ## Clear Symfony cache
+	docker compose exec app php bin/console cache:clear
+
+composer-install: ## Run composer install inside the container
+	docker compose exec -u root app chown -R www-data:www-data /var/www/html/var
+	docker compose exec app composer install --prefer-dist --no-scripts
+
+composer-update: ## Run composer update inside the container
+	docker compose exec app composer update
+
+# --- JWT ----------------------------------------------------------------------
+
+jwt-keys: ## Generate JWT keys if missing (lexik:jwt:generate-keypair)
+	@docker compose exec app sh -c " \
+		if [ ! -f config/jwt/private.pem ]; then \
+			php bin/console lexik:jwt:generate-keypair; \
+			echo 'JWT keys generated in config/jwt/'; \
+		else \
+			echo 'JWT keys already present -- use jwt-keys-force to overwrite'; \
+		fi"
+
+jwt-keys-force: ## Regenerate JWT keys even if they already exist
+	docker compose exec app php bin/console lexik:jwt:generate-keypair --overwrite
+	@echo "JWT keys regenerated"
+
+# --- Initial setup ------------------------------------------------------------
+
+setup: ## Application setup: migrate + jwt-keys + cache-clear
+	@echo "-- Doctrine migrations --------------------------------------"
+	@$(MAKE) --no-print-directory migrate
+	@echo "-- JWT keys -------------------------------------------------"
+	@$(MAKE) --no-print-directory jwt-keys
+	@echo "-- Symfony cache --------------------------------------------"
+	@$(MAKE) --no-print-directory cache-clear
+	@echo "Setup complete"
+
+# --- Production ---------------------------------------------------------------
+
+prod-up: ## Start in production mode (no dev override)
+	docker compose -f docker-compose.yml up -d
+
+prod-deploy: ## Full deploy: build + migrate + cache warmup
+	docker compose -f docker-compose.yml build
+	docker compose -f docker-compose.yml up -d
+	docker compose -f docker-compose.yml exec app php bin/console doctrine:migrations:migrate --no-interaction
+	docker compose -f docker-compose.yml exec app php bin/console cache:warmup
+	@echo "Deployment complete"

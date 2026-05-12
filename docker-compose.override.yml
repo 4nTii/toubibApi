@@ -1,0 +1,80 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        http_proxy: ""
+        https_proxy: ""
+        HTTP_PROXY: ""
+        HTTPS_PROXY: ""
+        NO_PROXY: "*"
+    container_name: toubib_app_dev
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: "1"
+      XDEBUG_MODE: develop,debug
+      XDEBUG_CONFIG: "client_host=host.docker.internal client_port=9003"
+      http_proxy: ""
+      https_proxy: ""
+      HTTP_PROXY: ""
+      HTTPS_PROXY: ""
+      NO_PROXY: "*"
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+    ports:
+      - "9003:9003"
+
+  nginx:
+    ports:
+      - "8000:80"
+    volumes:
+      - ./docker/nginx/dev.conf:/etc/nginx/conf.d/default.conf:ro
+      - .:/var/www/html:ro
+
+  db:
+    ports:
+      - "3306:3306"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  messenger:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        http_proxy: ""
+        https_proxy: ""
+        HTTP_PROXY: ""
+        HTTPS_PROXY: ""
+        NO_PROXY: "*"
+    command: php bin/console messenger:consume async -vv
+    environment:
+      APP_ENV: dev
+      http_proxy: ""
+      https_proxy: ""
+      HTTP_PROXY: ""
+      HTTPS_PROXY: ""
+      NO_PROXY: "*"
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+
+  # -----------------------------------------
+  # Mailpit - local email catcher (dev only)
+  # -----------------------------------------
+  mailer:
+    image: axllent/mailpit
+    container_name: toubib_mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    networks:
+      - toubib_network
