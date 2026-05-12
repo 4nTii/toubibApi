@@ -42,28 +42,6 @@ services:
     ports:
       - "6379:6379"
 
-  messenger:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-      args:
-        http_proxy: ""
-        https_proxy: ""
-        HTTP_PROXY: ""
-        HTTPS_PROXY: ""
-        NO_PROXY: "*"
-    command: php bin/console messenger:consume async -vv
-    environment:
-      APP_ENV: dev
-      http_proxy: ""
-      https_proxy: ""
-      HTTP_PROXY: ""
-      HTTPS_PROXY: ""
-      NO_PROXY: "*"
-    volumes:
-      - .:/var/www/html
-      - /var/www/html/vendor
-
   # -----------------------------------------
   # Mailpit - local email catcher (dev only)
   # -----------------------------------------
@@ -76,5 +54,22 @@ services:
     environment:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    networks:
+      - toubib_network
+
+  # -----------------------------------------
+  # phpMyAdmin (dev only)
+  # -----------------------------------------
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: toubib_phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: ${DB_USER:-toubib_user}
+      PMA_PASSWORD: ${DB_PASSWORD:-toubib_password}
+    depends_on:
+      - db
     networks:
       - toubib_network

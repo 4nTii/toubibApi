@@ -1,7 +1,7 @@
 .PHONY: all help build up down restart logs logs-app shell db-shell \
-        migrate migrate-diff fixtures cache-clear \
+        migrate migrate-diff db-fixtures fixtures cache-clear \
         jwt-keys jwt-keys-force composer-install composer-update \
-        setup prod-up prod-deploy
+        setup db-init prod-up prod-deploy
 
 # --- Default target: full install and start -----------------------------------
 
@@ -34,7 +34,6 @@ all: ## Run everything: build -> up -> setup (migrate + jwt + cache)
 	@# -- 5. Application setup ---------------------------------
 	@echo ""
 	@echo "--- Application setup -------------------------------"
-	@# -- Composer install -----------------------------------
 	@echo "-- Composer install -----------------------------------------"
 	@$(MAKE) --no-print-directory composer-install
 	@$(MAKE) --no-print-directory setup
@@ -93,10 +92,17 @@ redis-cli: ## Open a Redis CLI
 migrate: ## Run Doctrine migrations
 	docker compose exec app php bin/console doctrine:migrations:migrate --no-interaction
 
+db-init: ## Init DB from entities (schema:create + mark all migrations done)
+	docker compose exec app php bin/console doctrine:schema:create --no-interaction
+	docker compose exec app php bin/console doctrine:migrations:sync-metadata-storage --no-interaction && docker compose exec app php bin/console doctrine:migrations:version --add --all --no-interaction
+
 migrate-diff: ## Generate a migration from entities
 	docker compose exec app php bin/console doctrine:migrations:diff
 
-fixtures: ## Load fixtures (dev)
+db-fixtures: ## Load SQL test data into the database
+	docker compose exec -T db mysql -u $${DB_USER:-toubib_user} -p$${DB_PASSWORD:-toubib_password} $${DB_NAME:-toubib} < docker/mysql/data-dev.sql
+
+fixtures: ## Load Symfony fixtures (dev)
 	docker compose exec app php bin/console doctrine:fixtures:load --no-interaction
 
 cache-clear: ## Clear Symfony cache
@@ -126,9 +132,11 @@ jwt-keys-force: ## Regenerate JWT keys even if they already exist
 
 # --- Initial setup ------------------------------------------------------------
 
-setup: ## Application setup: migrate + jwt-keys + cache-clear
-	@echo "-- Doctrine migrations --------------------------------------"
-	@$(MAKE) --no-print-directory migrate
+setup: ## Application setup: db-init + db-fixtures + jwt-keys + cache-clear
+	@echo "-- Database schema ------------------------------------------"
+	@$(MAKE) --no-print-directory db-init
+	@echo "-- SQL Fixtures ---------------------------------------------"
+	@$(MAKE) --no-print-directory db-fixtures
 	@echo "-- JWT keys -------------------------------------------------"
 	@$(MAKE) --no-print-directory jwt-keys
 	@echo "-- Symfony cache --------------------------------------------"
