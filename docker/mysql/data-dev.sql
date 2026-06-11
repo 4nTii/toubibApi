@@ -3,6 +3,8 @@
 -- Usage: docker compose exec -T db mysql -u toubib_user -ptoubib_password toubib < fixtures.sql
 -- ============================================================
 
+ALTER DATABASE CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 0;
 
 TRUNCATE TABLE app_config;
