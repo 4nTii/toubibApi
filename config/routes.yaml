@@ -175,6 +175,13 @@ app_search_doc_bus_spec:
     requirements:
         slash: /?
 
+app_search_results:
+    path: /api/search/results{slash}
+    controller: App\Controller\SearchRequests\SearchRequestsController::searchResults
+    methods: GET
+    requirements:
+        slash: /?
+
 app_search_region_ville:
     path: /api/searchgeo{slash}
     controller: App\Controller\SearchRequests\SearchRequestsController::searchRegionsVilles

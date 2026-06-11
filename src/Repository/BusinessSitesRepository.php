@@ -71,6 +71,26 @@ class BusinessSitesRepository extends ServiceEntityRepository
     }
 
     /**
+     * Retourne les noms de villes distincts correspondant au terme de recherche.
+     */
+    public function searchDistinctVilles(string $term, int $max = 5): array
+    {
+        $term = '%' . strtolower($term) . '%';
+
+        return array_column(
+            $this->createQueryBuilder('bs')
+                ->select('DISTINCT bs.ville')
+                ->where('LOWER(bs.ville) LIKE :term')
+                ->setParameter('term', $term)
+                ->orderBy('bs.ville', 'ASC')
+                ->setMaxResults($max)
+                ->getQuery()
+                ->getScalarResult(),
+            'ville'
+        );
+    }
+
+    /**
      * Récupère les sites avec le plus de médecins (optionnel)
      */
     public function findSitesWithDoctorsCount(int $limit = 10): array

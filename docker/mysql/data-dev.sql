@@ -84,12 +84,192 @@ INSERT INTO patients (id, user_id, medical_history) VALUES
 (5, 10, 'Hypertension artérielle traitée depuis 2020.');
 
 -- ── Doctor Business Sites ────────────────────────────────────
-INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_primary, consultation_duration, consultation_fee) VALUES
-(1, 1, 1, 1, 1, 20, 2500),
-(2, 2, 2, 1, 1, 30, 5000),
-(3, 3, 3, 1, 1, 30, 3500),
-(4, 4, 4, 1, 1, 30, 4500),
-(5, 1, 3, 0, 0, 20, 2500);
+INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_primary, consultation_duration, consultation_fee, working_schedule) VALUES
+(1, 1, 1, 1, 1, 20, 2500, '{
+    "friday": {
+        "end": "17:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "monday": {
+        "end": "18:00",
+        "start": "08:30",
+        "enabled": true
+    },
+    "sunday": {
+        "end": "00:00",
+        "start": "00:00",
+        "enabled": false
+    },
+    "tuesday": {
+        "end": "18:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "saturday": {
+        "end": "12:00",
+        "start": "09:00",
+        "enabled": false
+    },
+    "thursday": {
+        "end": "18:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "wednesday": {
+        "end": "12:00",
+        "start": "08:00",
+        "enabled": true
+    }
+}'),
+(2, 2, 2, 1, 1, 30, 5000, '{
+    "friday": {
+        "end": "17:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "monday": {
+        "end": "18:00",
+        "start": "08:30",
+        "enabled": true
+    },
+    "sunday": {
+        "end": "00:00",
+        "start": "00:00",
+        "enabled": false
+    },
+    "tuesday": {
+        "end": "18:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "saturday": {
+        "end": "12:00",
+        "start": "09:00",
+        "enabled": false
+    },
+    "thursday": {
+        "end": "18:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "wednesday": {
+        "end": "12:00",
+        "start": "08:00",
+        "enabled": true
+    }
+}'),
+(3, 3, 3, 1, 1, 30, 3500, '{
+    "friday": {
+        "end": "17:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "monday": {
+        "end": "18:00",
+        "start": "08:30",
+        "enabled": true
+    },
+    "sunday": {
+        "end": "00:00",
+        "start": "00:00",
+        "enabled": false
+    },
+    "tuesday": {
+        "end": "18:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "saturday": {
+        "end": "12:00",
+        "start": "09:00",
+        "enabled": false
+    },
+    "thursday": {
+        "end": "18:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "wednesday": {
+        "end": "12:00",
+        "start": "08:00",
+        "enabled": true
+    }
+}'),
+(4, 4, 4, 1, 1, 30, 4500, '{
+    "friday": {
+        "end": "17:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "monday": {
+        "end": "18:00",
+        "start": "08:30",
+        "enabled": true
+    },
+    "sunday": {
+        "end": "00:00",
+        "start": "00:00",
+        "enabled": false
+    },
+    "tuesday": {
+        "end": "18:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "saturday": {
+        "end": "12:00",
+        "start": "09:00",
+        "enabled": false
+    },
+    "thursday": {
+        "end": "18:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "wednesday": {
+        "end": "12:00",
+        "start": "08:00",
+        "enabled": true
+    }
+}'),
+(5, 1, 3, 0, 0, 20, 2500, '{
+    "friday": {
+        "end": "17:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "monday": {
+        "end": "18:00",
+        "start": "08:30",
+        "enabled": true
+    },
+    "sunday": {
+        "end": "00:00",
+        "start": "00:00",
+        "enabled": false
+    },
+    "tuesday": {
+        "end": "18:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "saturday": {
+        "end": "12:00",
+        "start": "09:00",
+        "enabled": false
+    },
+    "thursday": {
+        "end": "18:00",
+        "start": "08:00",
+        "enabled": true
+    },
+    "wednesday": {
+        "end": "12:00",
+        "start": "08:00",
+        "enabled": true
+    }
+}');
 
 -- ── Appointments ─────────────────────────────────────────────
 INSERT INTO appointments (id, patient_id, doctor_id, business_site_id, start_time, end_time, status, notes) VALUES

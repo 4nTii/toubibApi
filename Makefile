@@ -52,8 +52,9 @@ all: ## Run everything: build -> up -> setup (migrate + jwt + cache)
 	@echo "-----------------------------------------------------"
 	@echo "  Toubib is ready"
 	@echo ""
-	@echo "  API   -> http://localhost:8000"
-	@echo "  Mails -> http://localhost:8025"
+	@echo "  API       -> http://localhost:8000"
+	@echo "  Mails     -> http://localhost:8025"
+	@echo "  phpMyAdmin-> http://localhost:8081"
 	@echo ""
 	@echo "  Run 'make help' to see all available commands"
 	@echo "-----------------------------------------------------"
@@ -70,8 +71,9 @@ build: ## Build Docker images
 
 up: ## Start containers (dev)
 	docker compose up -d
-	@echo "App    : http://localhost:8000"
-	@echo "Mails  : http://localhost:8025"
+	@echo "App       : http://localhost:8000"
+	@echo "Mails     : http://localhost:8025"
+	@echo "phpMyAdmin: http://localhost:8081"
 
 down: ## Stop and remove containers
 	docker compose down

@@ -102,32 +102,102 @@ class SearchRequestsController extends AbstractController
         ], 200);
     }
 
-    public function searchRegionsVilles(
+    public function searchResults(
         Request $request,
-        RegionsRepository $regionsRepository
+        DoctorsRepository $doctorsRepository
     ): JsonResponse {
-        $value = strtolower($request->query->get('value', ''));
-        $result = [];
-        if (strlen($value) < 2) {
+        $searchValue = trim($request->query->get('searchValue', ''));
+        $location    = trim($request->query->get('location', ''));
+        $page        = max(1, (int) $request->query->get('page', 1));
+        $limit       = min(50, max(1, (int) $request->query->get('limit', 10)));
+
+        if ($searchValue === '' && $location === '') {
             return $this->json([
-                'status' => true,
-                'query' => $value,
-                'data' => []
-            ]);
+                'status'  => false,
+                'message' => 'Au moins un paramètre (searchValue ou location) est requis.',
+            ], 400);
         }
 
-        $regions = $regionsRepository->searchByName($value);
-        foreach ($regions as $region) {
-            $result['region'][] = [
-                'id' => $region->getId(),
-                'name' => $region->getName()
+        $result = $doctorsRepository->searchWithFilters(
+            $searchValue !== '' ? $searchValue : null,
+            $location    !== '' ? $location    : null,
+            $page,
+            $limit
+        );
+
+        $data = [];
+        foreach ($result['doctors'] as $doctor) {
+            $user = $doctor->getUser();
+
+            $businessSites = [];
+            foreach ($doctor->getDoctorBusinessSites() as $dbs) {
+                $bs = $dbs->getBusinessSite();
+                $businessSites[] = [
+                    'id'      => $bs->getId(),
+                    'name'    => $bs->getName(),
+                    'ville'   => $bs->getVille(),
+                    'address' => $bs->getAddress(),
+                    'phone'   => $bs->getPhone(),
+                    'region'  => $bs->getRegion()?->getName(),
+                ];
+            }
+
+            $data[] = [
+                'id'                      => $doctor->getId(),
+                'fullName'                => $user->getFullName(),
+                'gender'                  => $user->getGender(),
+                'speciality'              => $doctor->getSpeciality()?->getName(),
+                'profilePicture'          => $doctor->getProfilePicture(),
+                'acceptNewPatients'       => $doctor->isAcceptNewPatients(),
+                'teleconsultationEnabled' => $doctor->isTeleconsultationEnabled(),
+                'verified'                => $doctor->isVerified(),
+                'businessSites'           => $businessSites,
             ];
         }
 
         return $this->json([
+            'status'  => true,
+            'message' => 'Résultats de la recherche',
+            'data'    => $data,
+            'meta'    => [
+                'total' => $result['total'],
+                'page'  => $result['page'],
+                'limit' => $result['limit'],
+                'pages' => $result['pages'],
+            ],
+        ]);
+    }
+
+    public function searchRegionsVilles(
+        Request $request,
+        RegionsRepository $regionsRepository,
+        BusinessSitesRepository $businessSitesRepository
+    ): JsonResponse {
+        $value = strtolower($request->query->get('value', ''));
+
+        if (strlen($value) < 2) {
+            return $this->json([
+                'status' => true,
+                'query'  => $value,
+                'data'   => [],
+            ]);
+        }
+
+        $result = [];
+
+        foreach ($regionsRepository->searchByName($value) as $region) {
+            $result['regions'][] = $region->getName();
+        }
+
+        $villes = $businessSitesRepository->searchDistinctVilles($value);
+        if (!empty($villes)) {
+            $result['villes'] = $villes;
+        }
+
+        return $this->json([
             'status' => true,
-            'query' => $value,
-            'data' => $result
-        ], 200);
+            'query'  => $value,
+            'data'   => $result,
+        ]);
     }
 }
