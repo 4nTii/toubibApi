@@ -3,7 +3,9 @@
 namespace App\Controller\Doctors;
 
 use App\Entity\Appointments;
+use App\Entity\Doctors;
 use App\Entity\Patients;
+use App\Repository\AppointmentsRepository;
 use App\Repository\DoctorsRepository;
 use App\Repository\BusinessSitesRepository;
 use App\Repository\PatientsRepository;
@@ -16,6 +18,165 @@ use Symfony\Component\HttpFoundation\Request;
 
 class DoctorsAppointment extends AbstractController
 {
+    public function getScheduledAppointments(
+        AppointmentsRepository $appointmentsRepository,
+        DoctorsRepository $doctorsRepository
+    ): JsonResponse {
+        /** @var \App\Entity\Users $user */
+        $user = $this->getUser();
+
+        $doctor = $doctorsRepository->findOneBy(['user' => $user]);
+        if (!$doctor) {
+            return $this->json(['status' => false, 'message' => 'Profil médecin introuvable'], 404);
+        }
+
+        $appointments = $appointmentsRepository->createQueryBuilder('a')
+            ->andWhere('a.doctor = :doctor')
+            ->andWhere('a.status = :status')
+            ->setParameter('doctor', $doctor)
+            ->setParameter('status', 'scheduled')
+            ->orderBy('a.startTime', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        $data = array_map(function (Appointments $appt) {
+            $patient = $appt->getPatient();
+            $patientUser = $patient->getUser();
+            $bs = $appt->getBusinessSite();
+
+            return [
+                'id'        => $appt->getId(),
+                'startTime' => $appt->getStartTime()->format('Y-m-d H:i:s'),
+                'endTime'   => $appt->getEndTime()->format('Y-m-d H:i:s'),
+                'status'    => $appt->getStatus(),
+                'notes'     => $appt->getNotes(),
+                'patient'   => [
+                    'id'        => $patient->getId(),
+                    'userId'    => $patientUser->getId(),
+                    'firstName' => $patientUser->getFirstName(),
+                    'lastName'  => $patientUser->getLastName(),
+                    'email'     => $patientUser->getEmail(),
+                    'phone'     => $patientUser->getPhone(),
+                    'gender'    => $patientUser->getGender(),
+                ],
+                'businessSite' => [
+                    'id'   => $bs->getId(),
+                    'name' => $bs->getName(),
+                ],
+            ];
+        }, $appointments);
+
+        return $this->json(['status' => true, 'data' => $data]);
+    }
+
+    public function updateAppointmentStatus(
+        int $id,
+        Request $request,
+        AppointmentsRepository $appointmentsRepository,
+        DoctorsRepository $doctorsRepository,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        /** @var \App\Entity\Users $user */
+        $user = $this->getUser();
+
+        $doctor = $doctorsRepository->findOneBy(['user' => $user]);
+        if (!$doctor) {
+            return $this->json(['status' => false, 'message' => 'Profil médecin introuvable'], 404);
+        }
+
+        $appointment = $appointmentsRepository->find($id);
+        if (!$appointment || $appointment->getDoctor()->getId() !== $doctor->getId()) {
+            return $this->json(['status' => false, 'message' => 'Rendez-vous introuvable'], 404);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $newStatus = $data['status'] ?? null;
+
+        if (!in_array($newStatus, ['confirmed', 'canceled'], true)) {
+            return $this->json(['status' => false, 'message' => 'Statut invalide. Valeurs acceptées : confirmed, canceled'], 400);
+        }
+
+        $appointment->setStatus($newStatus);
+        $em->flush();
+
+        return $this->json([
+            'status'  => true,
+            'message' => $newStatus === 'confirmed' ? 'Rendez-vous confirmé' : 'Rendez-vous annulé',
+            'data'    => ['id' => $appointment->getId(), 'status' => $newStatus],
+        ]);
+    }
+
+    public function updateAppointment(
+        int $id,
+        Request $request,
+        AppointmentsRepository $appointmentsRepository,
+        DoctorsRepository $doctorsRepository,
+        UsersRepository $usersRepository,
+        PatientsRepository $patientsRepository,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        /** @var \App\Entity\Users $user */
+        $user = $this->getUser();
+
+        $doctor = $doctorsRepository->findOneBy(['user' => $user]);
+        if (!$doctor) {
+            return $this->json(['status' => false, 'message' => 'Profil médecin introuvable'], 404);
+        }
+
+        $appointment = $appointmentsRepository->find($id);
+        if (!$appointment || $appointment->getDoctor()->getId() !== $doctor->getId()) {
+            return $this->json(['status' => false, 'message' => 'Rendez-vous introuvable'], 404);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        if (!empty($data['idUser'])) {
+            $targetUser = $usersRepository->find($data['idUser']);
+            if (!$targetUser) {
+                return $this->json(['status' => false, 'message' => 'Patient introuvable'], 404);
+            }
+            $patient = $patientsRepository->findOneBy(['user' => $targetUser]);
+            if (!$patient) {
+                $patient = new Patients();
+                $patient->setUser($targetUser);
+                $em->persist($patient);
+            }
+            $appointment->setPatient($patient);
+        }
+
+        if (!empty($data['startDate']) && !empty($data['endDate'])) {
+            try {
+                $start = new \DateTimeImmutable($data['startDate']);
+                $end   = new \DateTimeImmutable($data['endDate']);
+                if ($start >= $end) {
+                    return $this->json(['status' => false, 'message' => 'Dates invalides'], 400);
+                }
+                $appointment->setStartTime(\DateTime::createFromImmutable($start));
+                $appointment->setEndTime(\DateTime::createFromImmutable($end));
+            } catch (\Exception $e) {
+                return $this->json(['status' => false, 'message' => 'Format de date invalide'], 400);
+            }
+        }
+
+        if (array_key_exists('notes', $data)) {
+            $appointment->setNotes($data['notes'] ?: null);
+        }
+
+        if (!empty($data['status']) && in_array($data['status'], ['scheduled', 'confirmed'], true)) {
+            $appointment->setStatus($data['status']);
+        }
+
+        $em->flush();
+
+        $confirmed = $appointment->getStatus() === 'confirmed';
+
+        return $this->json([
+            'status'  => true,
+            'message' => $confirmed ? 'Rendez-vous modifié et confirmé.' : 'Rendez-vous modifié avec succès.',
+            'data'    => ['id' => $appointment->getId()],
+        ]);
+    }
+
     public function getDoctorAvailableAppointment(
         int $id,
         string $startDate,

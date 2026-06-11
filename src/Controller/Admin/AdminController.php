@@ -2,8 +2,9 @@
 
 namespace App\Controller\Admin;
 
-use App\Entity\Users;
 use App\Entity\Doctors;
+use App\Entity\Specialities;
+use App\Entity\Users;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,6 +16,8 @@ class AdminController extends AbstractController
     {
         $search = trim($request->query->getString('search', ''));
         $role   = trim($request->query->getString('role', ''));
+        $page   = max(1, (int) $request->query->get('page', 1));
+        $limit  = max(1, min(100, (int) $request->query->get('limit', 10)));
 
         $qb = $em->createQueryBuilder()
             ->select('u')
@@ -36,8 +39,16 @@ class AdminController extends AbstractController
             $qb->andWhere('u.role = :role')->setParameter('role', $role);
         }
 
+        $total = (clone $qb)->select('COUNT(u.id)')->getQuery()->getSingleScalarResult();
+        $totalPages = (int) ceil($total / $limit);
+        $page = min($page, max(1, $totalPages));
+
         /** @var Users[] $users */
-        $users = $qb->getQuery()->getResult();
+        $users = $qb
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
 
         $doctorRepo = $em->getRepository(Doctors::class);
 
@@ -57,11 +68,21 @@ class AdminController extends AbstractController
                 'dateInscription'     => $user->getDateInscription()?->format('Y-m-d H:i:s'),
                 'lastLogin'           => $user->getLastLogin()?->format('Y-m-d H:i:s'),
                 'isDoctor'            => $doctor !== null,
+                'isDoctorActive'      => $doctor?->isActive(),
                 'doctorId'            => $doctor?->getId(),
             ];
         }, $users);
 
-        return $this->json(['status' => true, 'data' => $data]);
+        return $this->json([
+            'status'     => true,
+            'data'       => $data,
+            'pagination' => [
+                'page'       => $page,
+                'limit'      => $limit,
+                'total'      => (int) $total,
+                'totalPages' => $totalPages,
+            ],
+        ]);
     }
 
     public function suspendUser(int $id, EntityManagerInterface $em): JsonResponse
@@ -85,6 +106,62 @@ class AdminController extends AbstractController
         $action = $target->isActive() ? 'réactivé' : 'suspendu';
 
         return $this->json(['status' => true, 'message' => "Compte $action avec succès", 'isActive' => $target->isActive()]);
+    }
+
+    public function toggleDoctor(int $id, EntityManagerInterface $em): JsonResponse
+    {
+        /** @var Users|null $target */
+        $target = $em->getRepository(Users::class)->find($id);
+
+        if (!$target) {
+            return $this->json(['status' => false, 'message' => 'Utilisateur introuvable'], 404);
+        }
+
+        $doctor = $em->getRepository(Doctors::class)->findOneBy(['user' => $target]);
+
+        if ($doctor === null) {
+            // Promote: create a doctor profile
+            $speciality = $em->getRepository(Specialities::class)->findOneBy([]);
+            if (!$speciality) {
+                return $this->json(['status' => false, 'message' => 'Aucune spécialité disponible en base'], 422);
+            }
+
+            $doctor = new Doctors();
+            $doctor->setUser($target);
+            $doctor->setSpeciality($speciality);
+            $doctor->setLicenseNumber('ADM-' . $target->getId() . '-' . time());
+            $doctor->setActivityStarted(new \DateTime());
+            $doctor->setIsActive(true);
+
+            if ($target->getRole() === 'ROLE_USER') {
+                $target->setRole('ROLE_DOCTOR');
+            }
+
+            $em->persist($doctor);
+            $em->flush();
+
+            return $this->json([
+                'status'         => true,
+                'message'        => 'Utilisateur promu médecin',
+                'isDoctor'       => true,
+                'isDoctorActive' => true,
+                'doctorId'       => $doctor->getId(),
+            ]);
+        }
+
+        // Toggle doctor active status
+        $doctor->setIsActive(!$doctor->isActive());
+        $em->flush();
+
+        $action = $doctor->isActive() ? 'réactivé' : 'suspendu';
+
+        return $this->json([
+            'status'         => true,
+            'message'        => "Profil médecin $action",
+            'isDoctor'       => true,
+            'isDoctorActive' => $doctor->isActive(),
+            'doctorId'       => $doctor->getId(),
+        ]);
     }
 
     public function forcePasswordChange(int $id, EntityManagerInterface $em): JsonResponse

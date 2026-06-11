@@ -89,6 +89,13 @@ app_user_update:
     requirements:
         slash: /?
 
+app_user_appointments:
+    path: /api/users/me/appointments{slash}
+    controller: App\Controller\User\ProfileController::getAppointments
+    methods: GET
+    requirements:
+        slash: /?
+
 # ==============================================================================
 # Doctors
 # ==============================================================================
@@ -117,6 +124,20 @@ app_doctors_update_me:
     path: /api/doctor/me{slash}
     controller: App\Controller\Doctors\DoctorsController::updateConnectedDoctor
     methods: PATCH
+    requirements:
+        slash: /?
+
+app_doctors_create_patient:
+    path: /api/doctor/patients{slash}
+    controller: App\Controller\Doctors\DoctorsController::createPatient
+    methods: POST
+    requirements:
+        slash: /?
+
+app_doctors_search_patients:
+    path: /api/doctor/patients/search{slash}
+    controller: App\Controller\Doctors\DoctorsController::searchPatients
+    methods: GET
     requirements:
         slash: /?
 
@@ -191,6 +212,14 @@ app_admin_force_password_change:
         slash: /?
         id: '\d+'
 
+app_admin_toggle_doctor:
+    path: /api/admin/users/{id}/toggle-doctor{slash}
+    controller: App\Controller\Admin\AdminController::toggleDoctor
+    methods: PATCH
+    requirements:
+        slash: /?
+        id: '\d+'
+
 # ==============================================================================
 # Search
 # ==============================================================================
@@ -219,6 +248,29 @@ app_search_region_ville:
 # ==============================================================================
 # Search
 # ==============================================================================
+
+app_doctor_scheduled_appointments:
+    path: /api/doctor/appointments/scheduled{slash}
+    controller: App\Controller\Doctors\DoctorsAppointment::getScheduledAppointments
+    methods: GET
+    requirements:
+        slash: /?
+
+app_doctor_update_appointment:
+    path: /api/doctor/appointments/{id}{slash}
+    controller: App\Controller\Doctors\DoctorsAppointment::updateAppointment
+    methods: PATCH
+    requirements:
+        slash: /?
+        id: '\d+'
+
+app_doctor_update_appointment_status:
+    path: /api/doctor/appointments/{id}/status{slash}
+    controller: App\Controller\Doctors\DoctorsAppointment::updateAppointmentStatus
+    methods: PATCH
+    requirements:
+        slash: /?
+        id: '\d+'
 
 app_available_appointment:
     path: /api/doctor/{id}/get-appointment/start/{startDate}/end/{endDate}{slash}
