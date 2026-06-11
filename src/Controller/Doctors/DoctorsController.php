@@ -11,6 +11,7 @@ use App\Repository\UsersRepository;
 use App\Service\Auth\LoggingSecurityService;
 use App\Service\Helper\AppointmentsHelper;
 use App\Service\Helper\FileUploadHelper;
+use App\Service\Mailer\UserMailerService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -278,5 +279,104 @@ class DoctorsController extends AbstractController
             'message' => 'Profil médecin mis à jour avec succès',
             'data' => $doctor
         ], 200, [], ['groups' => ['doctor:read']]);
+    }
+
+    public function createPatient(
+        Request $request,
+        UsersRepository $usersRepository,
+        UserMailerService $mailer,
+        UserPasswordHasherInterface $userPasswordHasher,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+
+        foreach (['firstName', 'lastName', 'email', 'phone', 'gender'] as $field) {
+            if (empty($data[$field])) {
+                return $this->json(['status' => false, 'message' => "Le champ « $field » est requis."], 400);
+            }
+        }
+
+        if (!in_array($data['gender'], ['male', 'female'], true)) {
+            return $this->json(['status' => false, 'message' => 'Genre invalide. Valeurs acceptées : male, female'], 400);
+        }
+
+        if ($usersRepository->findByEmail($data['email'])) {
+            return $this->json(['status' => false, 'message' => 'Un compte avec cet email existe déjà.'], 409);
+        }
+
+        $user = new Users();
+        $user->setFirstName($data['firstName']);
+        $user->setLastName($data['lastName']);
+        $user->setEmail($data['email']);
+        $user->setPhone($data['phone']);
+        $user->setGender($data['gender']);
+        $user->setRole('ROLE_USER');
+        $user->setIsActive(true);
+        $user->setBiography('');
+        $user->setForcePasswordChange(true);
+        $plainPassword = 'Toubib@' . str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT);
+        $user->setPassword($userPasswordHasher->hashPassword($user, $plainPassword));
+
+        if (!empty($data['birthDay'])) {
+            try {
+                $user->setBirthDay(new \DateTime($data['birthDay']));
+            } catch (\Exception) {}
+        }
+
+        $em->persist($user);
+        $em->flush();
+
+        $mailer->sendPatientCreationEmail($user, $plainPassword);
+
+        return $this->json([
+            'status'  => true,
+            'message' => 'Patient créé avec succès.',
+            'data'    => [
+                'id'        => $user->getId(),
+                'firstName' => $user->getFirstName(),
+                'lastName'  => $user->getLastName(),
+                'email'     => $user->getEmail(),
+                'phone'     => $user->getPhone(),
+                'gender'    => $user->getGender(),
+            ],
+        ], 201);
+    }
+
+    public function searchPatients(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $q = trim($request->query->getString('q', ''));
+
+        if (strlen($q) < 2) {
+            return $this->json(['status' => true, 'data' => []]);
+        }
+
+        $qb = $em->createQueryBuilder()
+            ->select('u')
+            ->from(Users::class, 'u')
+            ->orderBy('u.lastName', 'ASC')
+            ->setMaxResults(10);
+
+        $qb->andWhere(
+            $qb->expr()->orX(
+                $qb->expr()->like('LOWER(u.firstName)', ':q'),
+                $qb->expr()->like('LOWER(u.lastName)', ':q'),
+                $qb->expr()->like('LOWER(u.email)', ':q'),
+                $qb->expr()->like('u.phone', ':q')
+            )
+        )->setParameter('q', '%' . strtolower($q) . '%');
+
+        /** @var Users[] $users */
+        $users = $qb->getQuery()->getResult();
+
+        $data = array_map(fn(Users $u) => [
+            'id'        => $u->getId(),
+            'firstName' => $u->getFirstName(),
+            'lastName'  => $u->getLastName(),
+            'email'     => $u->getEmail(),
+            'phone'     => $u->getPhone(),
+            'gender'    => $u->getGender(),
+        ], $users);
+
+        return $this->json(['status' => true, 'data' => $data]);
     }
 }

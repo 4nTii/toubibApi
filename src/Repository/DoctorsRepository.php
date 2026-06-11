@@ -219,6 +219,93 @@ class DoctorsRepository extends ServiceEntityRepository
     }
 
     /**
+     * Recherche paginée de médecins par nom/spécialité/établissement + filtre localisation.
+     *
+     * searchValue : correspond au nom du médecin, à la spécialité ou au nom du cabinet.
+     * location    : correspond à la ville (BusinessSites.ville) ou à la région (Regions.name).
+     *
+     * Utilise le pattern en deux étapes (IDs d'abord, hydratation ensuite) pour
+     * éviter les problèmes de pagination Doctrine avec les fetch-joins sur collections.
+     *
+     * @return array{doctors: Doctors[], total: int, page: int, limit: int, pages: int}
+     */
+    public function searchWithFilters(
+        ?string $searchValue,
+        ?string $location,
+        int $page,
+        int $limit
+    ): array {
+        $qb = $this->createQueryBuilder('d')
+            ->join('d.user', 'u')
+            ->leftJoin('d.speciality', 's')
+            ->leftJoin('d.doctorBusinessSites', 'dbs')
+            ->leftJoin('dbs.businessSite', 'bs')
+            ->leftJoin('bs.region', 'r')
+            ->andWhere('d.isActive = true');
+
+        if ($searchValue !== null && $searchValue !== '') {
+            $sv = '%' . mb_strtolower($searchValue) . '%';
+            $qb->andWhere(
+                'LOWER(u.firstName) LIKE :sv
+                 OR LOWER(u.lastName) LIKE :sv
+                 OR LOWER(CONCAT(u.firstName, \' \', u.lastName)) LIKE :sv
+                 OR LOWER(s.name) LIKE :sv
+                 OR LOWER(bs.name) LIKE :sv'
+            )->setParameter('sv', $sv);
+        }
+
+        if ($location !== null && $location !== '') {
+            $loc = '%' . mb_strtolower($location) . '%';
+            $qb->andWhere(
+                'LOWER(bs.ville) LIKE :loc OR LOWER(r.name) LIKE :loc'
+            )->setParameter('loc', $loc);
+        }
+
+        $total = (int) (clone $qb)
+            ->select('COUNT(DISTINCT d.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        // GROUP BY d.id + colonnes de tri dans le SELECT pour satisfaire MySQL ONLY_FULL_GROUP_BY
+        $ids = array_column(
+            (clone $qb)
+                ->select('d.id, u.lastName, u.firstName')
+                ->groupBy('d.id, u.lastName, u.firstName')
+                ->orderBy('u.lastName', 'ASC')
+                ->addOrderBy('u.firstName', 'ASC')
+                ->setFirstResult(($page - 1) * $limit)
+                ->setMaxResults($limit)
+                ->getQuery()
+                ->getScalarResult(),
+            'id'
+        );
+
+        $doctors = [];
+        if (!empty($ids)) {
+            $doctors = $this->createQueryBuilder('d')
+                ->where('d.id IN (:ids)')
+                ->setParameter('ids', $ids)
+                ->join('d.user', 'u')->addSelect('u')
+                ->leftJoin('d.speciality', 's')->addSelect('s')
+                ->leftJoin('d.doctorBusinessSites', 'dbs')->addSelect('dbs')
+                ->leftJoin('dbs.businessSite', 'bs')->addSelect('bs')
+                ->leftJoin('bs.region', 'r')->addSelect('r')
+                ->orderBy('u.lastName', 'ASC')
+                ->addOrderBy('u.firstName', 'ASC')
+                ->getQuery()
+                ->getResult();
+        }
+
+        return [
+            'doctors' => $doctors,
+            'total'   => $total,
+            'page'    => $page,
+            'limit'   => $limit,
+            'pages'   => $limit > 0 ? (int) ceil($total / $limit) : 0,
+        ];
+    }
+
+    /**
      * Récupère le owner d'un cabinet
      */
     public function findOwnerByBusinessSite(int $businessSiteId): ?Doctors

@@ -21,6 +21,7 @@ security:
 
     access_control:
         - { path: ^/api, methods: [OPTIONS], roles: PUBLIC_ACCESS }
+        - { path: ^/api/admin, roles: ROLE_ADMIN }
         - { path: ^/api/status/?$, roles: PUBLIC_ACCESS }
         - { path: ^/api/search, roles: PUBLIC_ACCESS }
         - { path: ^/api/doctor/\d+/?$, roles: PUBLIC_ACCESS }

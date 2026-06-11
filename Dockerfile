@@ -52,9 +52,8 @@ all: ## Run everything: build -> up -> setup (migrate + jwt + cache)
 	@echo "-----------------------------------------------------"
 	@echo "  Toubib is ready"
 	@echo ""
-	@echo "  API       -> http://localhost:8000"
-	@echo "  Mails     -> http://localhost:8025"
-	@echo "  phpMyAdmin-> http://localhost:8081"
+	@echo "  API   -> http://localhost:8000"
+	@echo "  Mails -> http://localhost:8025"
 	@echo ""
 	@echo "  Run 'make help' to see all available commands"
 	@echo "-----------------------------------------------------"
@@ -71,9 +70,8 @@ build: ## Build Docker images
 
 up: ## Start containers (dev)
 	docker compose up -d
-	@echo "App       : http://localhost:8000"
-	@echo "Mails     : http://localhost:8025"
-	@echo "phpMyAdmin: http://localhost:8081"
+	@echo "App    : http://localhost:8000"
+	@echo "Mails  : http://localhost:8025"
 
 down: ## Stop and remove containers
 	docker compose down
@@ -161,11 +159,11 @@ setup: ## Application setup: db-init + db-fixtures + jwt-keys + cache-clear
 # --- Production ---------------------------------------------------------------
 
 prod-up: ## Start in production mode (no dev override)
-	docker compose -f docker-compose.yml up -d
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 prod-deploy: ## Full deploy: build + migrate + cache warmup
-	docker compose -f docker-compose.yml build
-	docker compose -f docker-compose.yml up -d
-	docker compose -f docker-compose.yml exec app php bin/console doctrine:migrations:migrate --no-interaction
-	docker compose -f docker-compose.yml exec app php bin/console cache:warmup
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml build
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml exec app php bin/console doctrine:migrations:migrate --no-interaction
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml exec app php bin/console cache:warmup
 	@echo "Deployment complete"

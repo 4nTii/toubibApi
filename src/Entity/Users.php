@@ -106,6 +106,10 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read'])]
     private bool $isEmailVerified = true;
 
+    #[ORM\Column(type: 'boolean')]
+    #[Groups(['user:read'])]
+    private bool $forcePasswordChange = false;
+
     // ne jamais l'exposer
     #[ORM\Column(type: 'string', length: 255)]
     #[Ignore]
@@ -298,6 +302,16 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsEmailVerified(bool $isEmailVerified): self
     {
         $this->isEmailVerified = $isEmailVerified;
+        return $this;
+    }
+
+    public function isForcePasswordChange(): bool
+    {
+        return $this->forcePasswordChange;
+    }
+    public function setForcePasswordChange(bool $forcePasswordChange): self
+    {
+        $this->forcePasswordChange = $forcePasswordChange;
         return $this;
     }
 
