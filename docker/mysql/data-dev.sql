@@ -53,20 +53,20 @@ INSERT INTO business_sites (id, name, address, ville, phone, email, location_goo
 
 -- ── Users ────────────────────────────────────────────────────
 -- Mot de passe : Admin@1234 / Doctor@1234 / Patient@1234
-INSERT INTO users (id, first_name, last_name, gender, email, biography, phone, password, role, is_active, is_email_verified, is_phone_verified, user_token, date_inscription) VALUES
+INSERT INTO users (id, first_name, last_name, gender, email, biography, phone, password, role, is_active, is_email_verified, is_phone_verified, user_token, force_password_change, date_inscription) VALUES
 -- Admin
-(1,  'Admin',    'Toubib',      'male',   'admin@toubib.fr', 'The founder of the organisation, PWD: azerty123',         '+33600000000', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_ADMIN',   1, 1, 1, 'tok_admin_001', NOW()),
+(1,  'Admin',    'Toubib',      'male',   'admin@toubib.fr', 'The founder of the organisation, PWD: azerty123',         '+33600000000', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_ADMIN',   1, 1, 1, 'tok_admin_001', 0, NOW()),
 -- Médecins
-(2,  'Pierre',   'Dupont',      'male',   'dr.dupont@toubib.fr', 'Médecin avec 10 ans d\'expérience, spécialisé dans le suivi des maladies. PWD: azerty123',    '+33611000001', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_DOCTOR',  1, 1, 1, 'tok_doc_001',   NOW()),
-(3,  'Sophie',   'Martin',      'female', 'dr.martin@toubib.fr', 'Médecin avec 10 ans d\'expérience, spécialisé dans le suivi des maladies. PWD: azerty123',    '+33611000002', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_DOCTOR',  1, 1, 1, 'tok_doc_002',   NOW()),
-(4,  'Thomas',   'Bernard',     'male',   'dr.bernard@toubib.fr', 'Médecin avec 10 ans d\'expérience, spécialisé dans le suivi des maladies. PWD: azerty123',   '+33611000003', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_DOCTOR',  1, 1, 1, 'tok_doc_003',   NOW()),
-(5,  'Claire',   'Leroy',       'female', 'dr.leroy@toubib.fr', 'Médecin avec 10 ans d\'expérience, spécialisé dans le suivi des maladies. PWD: azerty123',     '+33611000004', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_DOCTOR',  1, 1, 1, 'tok_doc_004',   NOW()),
+(2,  'Pierre',   'Dupont',      'male',   'dr.dupont@toubib.fr', 'Médecin avec 10 ans d\'expérience, spécialisé dans le suivi des maladies. PWD: azerty123',    '+33611000001', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_DOCTOR',  1, 1, 1, 'tok_doc_001',   0, NOW()),
+(3,  'Sophie',   'Martin',      'female', 'dr.martin@toubib.fr', 'Médecin avec 10 ans d\'expérience, spécialisé dans le suivi des maladies. PWD: azerty123',    '+33611000002', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_DOCTOR',  1, 1, 1, 'tok_doc_002',   0, NOW()),
+(4,  'Thomas',   'Bernard',     'male',   'dr.bernard@toubib.fr', 'Médecin avec 10 ans d\'expérience, spécialisé dans le suivi des maladies. PWD: azerty123',   '+33611000003', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_DOCTOR',  1, 1, 1, 'tok_doc_003',   0, NOW()),
+(5,  'Claire',   'Leroy',       'female', 'dr.leroy@toubib.fr', 'Médecin avec 10 ans d\'expérience, spécialisé dans le suivi des maladies. PWD: azerty123',     '+33611000004', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_DOCTOR',  1, 1, 1, 'tok_doc_004',   0, NOW()),
 -- Patients
-(6,  'Lucas',    'Moreau',      'male',   'lucas.moreau@gmail.com', 'Je suis un nouveau patient. PWD: azerty123',       '+33622000001', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_USER', 1, 1, 1, 'tok_pat_001',   NOW()),
-(7,  'Emma',     'Petit',       'female', 'emma.petit@gmail.com', 'Je suis un nouveau patient. PWD: azerty123',         '+33622000002', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_USER', 1, 1, 1, 'tok_pat_002',   NOW()),
-(8,  'Hugo',     'Simon',       'male',   'hugo.simon@gmail.com', 'Je suis un nouveau patient. PWD: azerty123',         '+33622000003', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_USER', 1, 1, 1, 'tok_pat_003',   NOW()),
-(9,  'Camille',  'Laurent',     'female', 'camille.laurent@gmail.com', 'Je suis un nouveau patient. PWD: azerty123',    '+33622000004', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_USER', 1, 1, 1, 'tok_pat_004',   NOW()),
-(10, 'Antoine',  'Girard',      'male',   'antoine.girard@gmail.com', 'Je suis un nouveau patient. PWD: azerty123',     '+33622000005', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_USER', 1, 1, 1, 'tok_pat_005',   NOW());
+(6,  'Lucas',    'Moreau',      'male',   'lucas.moreau@gmail.com', 'Je suis un nouveau patient. PWD: azerty123',       '+33622000001', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_USER', 1, 1, 1, 'tok_pat_001',   0, NOW()),
+(7,  'Emma',     'Petit',       'female', 'emma.petit@gmail.com', 'Je suis un nouveau patient. PWD: azerty123',         '+33622000002', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_USER', 1, 1, 1, 'tok_pat_002',   0, NOW()),
+(8,  'Hugo',     'Simon',       'male',   'hugo.simon@gmail.com', 'Je suis un nouveau patient. PWD: azerty123',         '+33622000003', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_USER', 1, 1, 1, 'tok_pat_003',   0, NOW()),
+(9,  'Camille',  'Laurent',     'female', 'camille.laurent@gmail.com', 'Je suis un nouveau patient. PWD: azerty123',    '+33622000004', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_USER', 1, 1, 1, 'tok_pat_004',   0, NOW()),
+(10, 'Antoine',  'Girard',      'male',   'antoine.girard@gmail.com', 'Je suis un nouveau patient. PWD: azerty123',     '+33622000005', '$2y$13$usWpycVj3S7jkyRq6h74YOSxj1W/8QWWssiWPPOjYlGreJ1uEn3ma', 'ROLE_USER', 1, 1, 1, 'tok_pat_005',   0, NOW());
 
 -- ── Doctors ──────────────────────────────────────────────────
 INSERT INTO doctors (id, user_id, speciality_id, license_number, activity_started, biography, profile_picture, is_active, accept_new_patients, teleconsultation_enabled, verified) VALUES

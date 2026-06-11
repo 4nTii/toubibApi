@@ -165,6 +165,33 @@ app_businesssites_delete_doctor:
         targetDoctorBusinessSiteId: \d+
 
 # ==============================================================================
+# Admin
+# ==============================================================================
+
+app_admin_list_users:
+    path: /api/admin/users{slash}
+    controller: App\Controller\Admin\AdminController::listUsers
+    methods: GET
+    requirements:
+        slash: /?
+
+app_admin_suspend_user:
+    path: /api/admin/users/{id}/suspend{slash}
+    controller: App\Controller\Admin\AdminController::suspendUser
+    methods: PATCH
+    requirements:
+        slash: /?
+        id: '\d+'
+
+app_admin_force_password_change:
+    path: /api/admin/users/{id}/force-password-change{slash}
+    controller: App\Controller\Admin\AdminController::forcePasswordChange
+    methods: PATCH
+    requirements:
+        slash: /?
+        id: '\d+'
+
+# ==============================================================================
 # Search
 # ==============================================================================
 
