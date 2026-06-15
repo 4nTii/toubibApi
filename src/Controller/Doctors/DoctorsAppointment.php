@@ -3,12 +3,9 @@
 namespace App\Controller\Doctors;
 
 use App\Entity\Appointments;
-use App\Entity\Doctors;
-use App\Entity\Patients;
 use App\Repository\AppointmentsRepository;
 use App\Repository\DoctorsRepository;
 use App\Repository\BusinessSitesRepository;
-use App\Repository\PatientsRepository;
 use App\Repository\UsersRepository;
 use App\Service\Helper\AppointmentsHelper;
 use Doctrine\ORM\EntityManagerInterface;
@@ -40,8 +37,7 @@ class DoctorsAppointment extends AbstractController
             ->getResult();
 
         $data = array_map(function (Appointments $appt) {
-            $patient = $appt->getPatient();
-            $patientUser = $patient->getUser();
+            $patientUser = $appt->getPatient();
             $bs = $appt->getBusinessSite();
 
             return [
@@ -51,8 +47,7 @@ class DoctorsAppointment extends AbstractController
                 'status'    => $appt->getStatus(),
                 'notes'     => $appt->getNotes(),
                 'patient'   => [
-                    'id'        => $patient->getId(),
-                    'userId'    => $patientUser->getId(),
+                    'id'        => $patientUser->getId(),
                     'firstName' => $patientUser->getFirstName(),
                     'lastName'  => $patientUser->getLastName(),
                     'email'     => $patientUser->getEmail(),
@@ -112,7 +107,6 @@ class DoctorsAppointment extends AbstractController
         AppointmentsRepository $appointmentsRepository,
         DoctorsRepository $doctorsRepository,
         UsersRepository $usersRepository,
-        PatientsRepository $patientsRepository,
         EntityManagerInterface $em
     ): JsonResponse {
         /** @var \App\Entity\Users $user */
@@ -135,13 +129,7 @@ class DoctorsAppointment extends AbstractController
             if (!$targetUser) {
                 return $this->json(['status' => false, 'message' => 'Patient introuvable'], 404);
             }
-            $patient = $patientsRepository->findOneBy(['user' => $targetUser]);
-            if (!$patient) {
-                $patient = new Patients();
-                $patient->setUser($targetUser);
-                $em->persist($patient);
-            }
-            $appointment->setPatient($patient);
+            $appointment->setPatient($targetUser);
         }
 
         if (!empty($data['startDate']) && !empty($data['endDate'])) {
@@ -181,6 +169,7 @@ class DoctorsAppointment extends AbstractController
         int $id,
         string $startDate,
         string $endDate,
+        Request $request,
         DoctorsRepository $doctorsRepository,
         BusinessSitesRepository $businessSitesRepository,
         AppointmentsHelper $appointmentsHelper
@@ -211,32 +200,59 @@ class DoctorsAppointment extends AbstractController
             ], 400);
         }
 
-        $primaryBusinessSite = $businessSitesRepository->getPrimaryBusinessSite($doctor);
-        if (!$primaryBusinessSite) {
-            return $this->json([
-                'status'  => false,
-                'message' => 'Aucun cabinet principal défini pour ce médecin.'
-            ], 404);
+        // Get businessSiteId from query parameter
+        $businessSiteId = $request->query->getInt('businessSiteId');
+
+        if ($businessSiteId) {
+            // Use specified business site
+            $businessSite = $businessSitesRepository->find($businessSiteId);
+            if (!$businessSite) {
+                return $this->json([
+                    'status'  => false,
+                    'message' => 'Cabinet non trouvé.'
+                ], 404);
+            }
+            // Verify that this business site belongs to the doctor
+            $found = false;
+            foreach ($doctor->getDoctorBusinessSites() as $dbs) {
+                if ($dbs->getBusinessSite()->getId() === $businessSiteId) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                return $this->json([
+                    'status'  => false,
+                    'message' => 'Ce cabinet n\'appartient pas à ce médecin.'
+                ], 403);
+            }
+        } else {
+            // Use primary business site
+            $businessSite = $businessSitesRepository->getPrimaryBusinessSite($doctor);
+            if (!$businessSite) {
+                return $this->json([
+                    'status'  => false,
+                    'message' => 'Aucun cabinet principal défini pour ce médecin.'
+                ], 404);
+            }
         }
 
         $availableSlots = $appointmentsHelper->getSlotsByDates(
             $doctor,
-            $primaryBusinessSite,
+            $businessSite,
             [$dateStart, $dateEnd],
             true
         );
 
-        $response = [
+        return $this->json([
             'status' => true,
             'data'   => [
                 'doctorId'       => $doctor->getId(),
                 'startDate'      => $dateStart->format('Y-m-d'),
                 'endDate'        => $dateEnd->format('Y-m-d'),
-                'availableSlots' => $availableSlots
-            ]
-        ];
-
-        return $this->json($response, 200);
+                'availableSlots' => $availableSlots,
+            ],
+        ]);
     }
 
     public function setAppointment(
@@ -244,7 +260,6 @@ class DoctorsAppointment extends AbstractController
         Request $request,
         DoctorsRepository $doctorsRepository,
         BusinessSitesRepository $businessSitesRepository,
-        PatientsRepository $patientsRepository,
         UsersRepository $usersRepository,
         AppointmentsHelper $appointmentsHelper,
         EntityManagerInterface $entityManager
@@ -256,97 +271,87 @@ class DoctorsAppointment extends AbstractController
             return $this->json(['status' => false, 'message' => 'Corps de requête invalide.'], 400);
         }
 
-        $idUser = $data['idUser'] ?? null;
-        $startDate = $data['startDate'] ?? null;
-        $endDate   = $data['endDate'] ?? null;
-        $notes   = $data['notes'] ?? null;
+        $idUser        = $data['idUser'] ?? null;
+        $startDate     = $data['startDate'] ?? null;
+        $endDate       = $data['endDate'] ?? null;
+        $notes         = $data['notes'] ?? null;
+        $businessSiteId = $data['businessSiteId'] ?? null;
 
         if (!$idUser || !$startDate || !$endDate) {
-            return $this->json([
-                'status'  => false,
-                'message' => 'Requete invalide.'
-            ], 400);
+            return $this->json(['status' => false, 'message' => 'Requete invalide.'], 400);
         }
 
-        // Vérifier le docteur
         $doctor = $doctorsRepository->find($idDoctor);
         if (!$doctor) {
             return $this->json(['status' => false, 'message' => 'Requete invalide.'], 404);
         }
 
-        // Vérifier l'user
-        $user = $usersRepository->find($idUser);
-        if (!$user) {
+        $patient = $usersRepository->find($idUser);
+        if (!$patient) {
             return $this->json(['status' => false, 'message' => 'Requete invalide.'], 404);
         }
 
-        // Récupérer ou créer le patient
-        $patient = $patientsRepository->findOneBy(['user' => $user]);
-        if (!$patient) {
-            $patient = new Patients();
-            $patient->setUser($user);
-            $entityManager->persist($patient);
-        }
-
-        // Valider les dates
         try {
             $start = new \DateTimeImmutable($startDate);
             $end   = new \DateTimeImmutable($endDate);
         } catch (\Exception $e) {
-            return $this->json([
-                'status'  => false,
-                'message' => 'Requete invalide.'
-            ], 400);
+            return $this->json(['status' => false, 'message' => 'Requete invalide.'], 400);
         }
 
         if ($start >= $end) {
-            return $this->json([
-                'status'  => false,
-                'message' => 'Requete invalide.'
-            ], 400);
+            return $this->json(['status' => false, 'message' => 'Requete invalide.'], 400);
         }
 
-        // Récupérer le cabinet principal
-        $primaryBusinessSite = $businessSitesRepository->getPrimaryBusinessSite($doctor);
-        if (!$primaryBusinessSite) {
-            return $this->json([
-                'status'  => false,
-                'message' => 'Aucun cabinet principal défini pour ce médecin.'
-            ], 404);
+        // Get business site
+        if ($businessSiteId) {
+            // Use specified business site
+            $businessSite = $businessSitesRepository->find($businessSiteId);
+            if (!$businessSite) {
+                return $this->json(['status' => false, 'message' => 'Cabinet non trouvé.'], 404);
+            }
+            // Verify that this business site belongs to the doctor
+            $found = false;
+            foreach ($doctor->getDoctorBusinessSites() as $dbs) {
+                if ($dbs->getBusinessSite()->getId() === $businessSiteId) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                return $this->json(['status' => false, 'message' => 'Ce cabinet n\'appartient pas à ce médecin.'], 403);
+            }
+        } else {
+            // Use primary business site
+            $businessSite = $businessSitesRepository->getPrimaryBusinessSite($doctor);
+            if (!$businessSite) {
+                return $this->json(['status' => false, 'message' => 'Aucun cabinet principal défini pour ce médecin.'], 404);
+            }
         }
 
-        // Vérifier que le créneau est disponible
         $dateOnly  = new \DateTimeImmutable($start->format('Y-m-d'));
         $available = $appointmentsHelper->getSlotsByDates(
             $doctor,
-            $primaryBusinessSite,
+            $businessSite,
             $dateOnly,
             true
         );
 
-        $slotKey   = $start->format('H:i');
-        $slotEndKey = $end->format('H:i');
         $isAvailable = false;
-
         foreach ($available as $slot) {
-            if ($slot['start'] === $slotKey && $slot['end'] === $slotEndKey) {
+            if ($slot['start'] === $start->format('H:i') && $slot['end'] === $end->format('H:i')) {
                 $isAvailable = true;
                 break;
             }
         }
 
         if (!$isAvailable) {
-            return $this->json([
-                'status'  => false,
-                'message' => 'Ce créneau n\'est pas disponible.'
-            ], 409);
+            return $this->json(['status' => false, 'message' => 'Ce créneau n\'est pas disponible.'], 409);
         }
 
-        // Créer le rendez-vous
         $appointment = new Appointments();
         $appointment->setDoctor($doctor);
         $appointment->setPatient($patient);
-        $appointment->setBusinessSite($primaryBusinessSite);
+        $appointment->setBusinessSite($businessSite);
         $appointment->setNotes($notes);
         $appointment->setStartTime(\DateTime::createFromImmutable($start));
         $appointment->setEndTime(\DateTime::createFromImmutable($end));
@@ -355,7 +360,7 @@ class DoctorsAppointment extends AbstractController
         $entityManager->persist($appointment);
         $entityManager->flush();
 
-        $response = [
+        return $this->json([
             'status'  => true,
             'message' => 'Rendez-vous créé avec succès.',
             'data'    => [
@@ -366,12 +371,10 @@ class DoctorsAppointment extends AbstractController
                 'endTime'       => $end->format('Y-m-d H:i'),
                 'status'        => $appointment->getStatus(),
                 'businessSite'  => [
-                    'id'   => $primaryBusinessSite->getId(),
-                    'name' => $primaryBusinessSite->getName(),
-                ]
-            ]
-        ];
-
-        return $this->json($response, 201);
+                    'id'   => $businessSite->getId(),
+                    'name' => $businessSite->getName(),
+                ],
+            ],
+        ], 201);
     }
 }

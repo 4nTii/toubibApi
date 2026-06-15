@@ -249,6 +249,13 @@ app_search_region_ville:
 # Search
 # ==============================================================================
 
+app_doctor_calendar:
+    path: /api/doctor/calendar{slash}
+    controller: App\Controller\Doctors\CalendarController::getCalendarData
+    methods: GET
+    requirements:
+        slash: /?
+
 app_doctor_scheduled_appointments:
     path: /api/doctor/appointments/scheduled{slash}
     controller: App\Controller\Doctors\DoctorsAppointment::getScheduledAppointments

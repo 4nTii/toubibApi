@@ -17,7 +17,7 @@ TRUNCATE TABLE appointments;
 TRUNCATE TABLE unavailability_slots;
 TRUNCATE TABLE doctor_business_site;
 TRUNCATE TABLE doctors;
-TRUNCATE TABLE patients;
+TRUNCATE TABLE patients_history;
 TRUNCATE TABLE users;
 TRUNCATE TABLE business_sites;
 TRUNCATE TABLE specialties;
@@ -78,15 +78,15 @@ INSERT INTO doctors (id, user_id, speciality_id, license_number, activity_starte
 (4, 5, 4, 'RPPS-LEROY-001',   '2016-06-01', 'Dermatologue à Toulouse, spécialisée en dermatologie esthétique et traitement de l\'acné.', '',                                                    1, 1, 1, 1);
 
 -- ── Patients ─────────────────────────────────────────────────
-INSERT INTO patients (id, user_id, medical_history) VALUES
-(1, 6,  'Aucun antécédent notable. Vaccins à jour.'),
-(2, 7,  'Allergie aux pénicillines. Asthme léger depuis l\'enfance.'),
-(3, 8,  'Diabète de type 2 diagnostiqué en 2022. Suivi régulier.'),
-(4, 9,  'Migraines chroniques. Traitement préventif en cours.'),
-(5, 10, 'Hypertension artérielle traitée depuis 2020.');
+INSERT INTO patients_history (id, user_id, doctor_id, date, notes) VALUES
+(1, 6,  1, '2026-03-10 09:20:00', 'Aucun antécédent notable. Vaccins à jour. Patient en bonne santé générale.'),
+(2, 7,  2, '2026-03-15 10:30:00', 'Allergie aux pénicillines signalée. Asthme léger depuis l\'enfance, traitement de fond au besoin.'),
+(3, 8,  1, '2026-04-02 14:20:00', 'Diabète de type 2 diagnostiqué en 2022. Suivi glycémique régulier. HbA1c stable.'),
+(4, 9,  3, '2026-04-10 11:30:00', 'Migraines chroniques. Traitement préventif en cours, réévaluation dans 3 mois.'),
+(5, 10, 2, '2026-04-20 09:30:00', 'Hypertension artérielle traitée depuis 2020. Tension bien contrôlée sous traitement.');
 
 -- ── Doctor Business Sites ────────────────────────────────────
-INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_primary, consultation_duration, consultation_fee, working_schedule) VALUES
+INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_primary, consultation_duration, consultation_fee, working_schedule, share_calendar) VALUES
 (1, 1, 1, 1, 1, 20, 2500, '{
     "friday": {
         "end": "17:00",
@@ -123,7 +123,7 @@ INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_
         "start": "08:00",
         "enabled": true
     }
-}'),
+}', 0),
 (2, 2, 2, 1, 1, 30, 5000, '{
     "friday": {
         "end": "17:00",
@@ -160,7 +160,7 @@ INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_
         "start": "08:00",
         "enabled": true
     }
-}'),
+}', 0),
 (3, 3, 3, 1, 1, 30, 3500, '{
     "friday": {
         "end": "17:00",
@@ -197,7 +197,7 @@ INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_
         "start": "08:00",
         "enabled": true
     }
-}'),
+}', 0),
 (4, 4, 4, 1, 1, 30, 4500, '{
     "friday": {
         "end": "17:00",
@@ -234,7 +234,7 @@ INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_
         "start": "08:00",
         "enabled": true
     }
-}'),
+}', 0),
 (5, 1, 3, 0, 0, 20, 2500, '{
     "friday": {
         "end": "17:00",
@@ -271,27 +271,27 @@ INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_
         "start": "08:00",
         "enabled": true
     }
-}');
+}', 0);
 
 -- ── Appointments ─────────────────────────────────────────────
 INSERT INTO appointments (id, patient_id, doctor_id, business_site_id, start_time, end_time, status, notes) VALUES
-(1, 1, 1, 1, '2026-05-15 09:00:00', '2026-05-15 09:20:00', 'scheduled',  'Consultation annuelle de suivi'),
-(2, 2, 2, 2, '2026-05-15 10:30:00', '2026-05-15 11:00:00', 'scheduled',  'Contrôle post-hospitalisation'),
-(3, 3, 1, 1, '2026-05-14 14:00:00', '2026-05-14 14:20:00', 'completed',  'Renouvellement ordonnance diabète'),
-(4, 4, 3, 3, '2026-05-13 11:00:00', '2026-05-13 11:30:00', 'completed',  'Visite de contrôle pédiatrique'),
-(5, 5, 2, 2, '2026-05-10 09:30:00', '2026-05-10 10:00:00', 'cancelled',  'Patient empêché, annulation la veille'),
-(6, 1, 4, 4, '2026-05-20 16:00:00', '2026-05-20 16:30:00', 'scheduled',  'Première consultation dermatologie');
+(1, 6,  1, 1, '2026-05-15 09:00:00', '2026-05-15 09:20:00', 'scheduled',  'Consultation annuelle de suivi'),
+(2, 7,  2, 2, '2026-05-15 10:30:00', '2026-05-15 11:00:00', 'scheduled',  'Contrôle post-hospitalisation'),
+(3, 8,  1, 1, '2026-05-14 14:00:00', '2026-05-14 14:20:00', 'completed',  'Renouvellement ordonnance diabète'),
+(4, 9,  3, 3, '2026-05-13 11:00:00', '2026-05-13 11:30:00', 'completed',  'Visite de contrôle pédiatrique'),
+(5, 10, 2, 2, '2026-05-10 09:30:00', '2026-05-10 10:00:00', 'cancelled',  'Patient empêché, annulation la veille'),
+(6, 6,  4, 4, '2026-05-20 16:00:00', '2026-05-20 16:30:00', 'scheduled',  'Première consultation dermatologie');
 
 -- ── Reviews ──────────────────────────────────────────────────
 INSERT INTO reviews (id, patient_id, doctor_id, appointment_id, rating, comment, created_at) VALUES
-(1, 3, 1, 3, 5, 'Docteur très à l\'écoute, explications claires. Je recommande.',        NOW()),
-(2, 4, 3, 4, 4, 'Excellent pédiatre, mes enfants adorent venir en consultation.',         NOW()),
-(3, 1, 1, NULL, 5, 'Dr. Dupont suit ma famille depuis des années, toujours disponible.', NOW());
+(1, 8, 1, 3, 5, 'Docteur très à l\'écoute, explications claires. Je recommande.',        NOW()),
+(2, 9, 3, 4, 4, 'Excellent pédiatre, mes enfants adorent venir en consultation.',         NOW()),
+(3, 6, 1, NULL, 5, 'Dr. Dupont suit ma famille depuis des années, toujours disponible.', NOW());
 
 -- ── Prescriptions ────────────────────────────────────────────
 INSERT INTO prescriptions (id, doctor_id, patient_id, appointment_id, medications, notes, created_at) VALUES
-(1, 1, 3, 3, 'Metformine 1000mg — 1 comprimé matin et soir au repas\nGlucophage LP 500mg — 1 comprimé le soir', 'Contrôle glycémique dans 3 mois. Régime équilibré indispensable.', NOW()),
-(2, 3, 4, 4, 'Doliprane 500mg — 1 sachet si fièvre > 38.5°C\nSmecta — 1 sachet 3x/jour pendant 5 jours',      'Boire suffisamment. Revoir si persistance des symptômes au-delà de 48h.', NOW());
+(1, 1, 8, 3, 'Metformine 1000mg — 1 comprimé matin et soir au repas\nGlucophage LP 500mg — 1 comprimé le soir', 'Contrôle glycémique dans 3 mois. Régime équilibré indispensable.', NOW()),
+(2, 3, 9, 4, 'Doliprane 500mg — 1 sachet si fièvre > 38.5°C\nSmecta — 1 sachet 3x/jour pendant 5 jours',      'Boire suffisamment. Revoir si persistance des symptômes au-delà de 48h.', NOW());
 
 -- ── Messages ─────────────────────────────────────────────────
 INSERT INTO messages (id, sender_id, receiver_id, appointment_id, content, sent_at, is_read) VALUES

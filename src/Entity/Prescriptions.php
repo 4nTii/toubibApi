@@ -19,9 +19,9 @@ class Prescriptions
     private ?Doctors $doctor = null;
 
     // Patient destinataire
-    #[ORM\ManyToOne(targetEntity: Patients::class, inversedBy: 'prescriptions')]
+    #[ORM\ManyToOne(targetEntity: Users::class)]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Patients $patient = null;
+    private ?Users $patient = null;
 
     // Optionnel : lié à un rendez-vous spécifique
     #[ORM\ManyToOne(targetEntity: Appointments::class)]
@@ -60,12 +60,12 @@ class Prescriptions
         return $this;
     }
 
-    public function getPatient(): ?Patients
+    public function getPatient(): ?Users
     {
         return $this->patient;
     }
 
-    public function setPatient(Patients $patient): self
+    public function setPatient(Users $patient): self
     {
         $this->patient = $patient;
         return $this;

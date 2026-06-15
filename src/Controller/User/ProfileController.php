@@ -4,7 +4,6 @@ namespace App\Controller\User;
 
 use App\Entity\Appointments;
 use App\Repository\AppointmentsRepository;
-use App\Repository\PatientsRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,7 +35,6 @@ class ProfileController extends AbstractController
     }
 
     public function getAppointments(
-        PatientsRepository $patientsRepository,
         AppointmentsRepository $appointmentsRepository
     ): JsonResponse {
         /** @var \App\Entity\Users $user */
@@ -46,15 +44,9 @@ class ProfileController extends AbstractController
             return $this->json(['status' => false, 'message' => 'Utilisateur non authentifié'], 401);
         }
 
-        $patient = $patientsRepository->findOneBy(['user' => $user]);
-
-        if (!$patient) {
-            return $this->json(['status' => true, 'message' => 'Aucun rendez-vous', 'data' => []]);
-        }
-
         $appointments = $appointmentsRepository->createQueryBuilder('a')
-            ->andWhere('a.patient = :patient')
-            ->setParameter('patient', $patient)
+            ->andWhere('a.patient = :user')
+            ->setParameter('user', $user)
             ->orderBy('a.startTime', 'DESC')
             ->getQuery()
             ->getResult();

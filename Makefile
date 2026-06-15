@@ -4,7 +4,7 @@
         setup db-init prod-up prod-deploy
 
 ifeq ($(OS),Windows_NT)
-ENV_CHECK = powershell -NoProfile -ExecutionPolicy Bypass -Command "if (-not (Test-Path '.env')) { if (Test-Path '.env.docker') { Copy-Item '.env.docker' '.env'; Write-Host 'WARNING: .env created from .env.docker -- default values used, edit .env to customize' } else { Write-Host 'ERROR: No .env file found. Create one before continuing.'; exit 1 } }"
+ENV_CHECK = powershell -NoProfile -ExecutionPolicy Bypass -Command "if (-not (Test-Path '.env')) { if (Test-Path '.env.example') { Copy-Item '.env.example' '.env'; Write-Host 'WARNING: .env created from .env.example -- edit .env and set your secrets before continuing' } else { Write-Host 'ERROR: No .env file found. Copy .env.example to .env and fill in your values.'; exit 1 } }"
 HELP_CMD = powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-Content '$(firstword $(MAKEFILE_LIST))' | Where-Object { $$_ -match '^[a-zA-Z_-]+:.*?\#\# ' } | ForEach-Object { $$parts = $$_ -split ':.*?\#\# ', 2; Write-Host ('{0,-22} {1}' -f $$parts[0], $$parts[1]) }"
 WAIT_FOR_DB = powershell -NoProfile -ExecutionPolicy Bypass -Command "while ($$true) { docker compose exec db mysqladmin ping -h localhost --silent 2>$$null; if ($$LASTEXITCODE -eq 0) { break }; Write-Host -NoNewline '.'; Start-Sleep -Seconds 2 }; Write-Host ' ready'"
 DB_SHELL_CMD = powershell -NoProfile -ExecutionPolicy Bypass -Command "$$u = if ($$env:DB_USER) { $$env:DB_USER } else { 'toubib_user' }; $$p = if ($$env:DB_PASSWORD) { $$env:DB_PASSWORD } else { 'toubib_password' }; $$d = if ($$env:DB_NAME) { $$env:DB_NAME } else { 'toubib' }; docker compose exec db mysql -u $$u ('-p' + $$p) $$d"
@@ -12,11 +12,11 @@ REDIS_CLI_CMD = powershell -NoProfile -ExecutionPolicy Bypass -Command "$$p = if
 DB_FIXTURES_CMD = powershell -NoProfile -ExecutionPolicy Bypass -Command "$$u = if ($$env:DB_USER) { $$env:DB_USER } else { 'toubib_user' }; $$p = if ($$env:DB_PASSWORD) { $$env:DB_PASSWORD } else { 'toubib_password' }; $$d = if ($$env:DB_NAME) { $$env:DB_NAME } else { 'toubib' }; Get-Content -Raw 'docker/mysql/data-dev.sql' | docker compose exec -T db mysql -u $$u ('-p' + $$p) $$d"
 else
 ENV_CHECK = if [ ! -f .env ]; then \
-		if [ -f .env.docker ]; then \
-			cp .env.docker .env; \
-			echo "WARNING: .env created from .env.docker -- default values used, edit .env to customize"; \
+		if [ -f .env.example ]; then \
+			cp .env.example .env; \
+			echo "WARNING: .env created from .env.example -- edit .env and set your secrets before continuing"; \
 		else \
-			echo "ERROR: No .env file found. Create one before continuing."; \
+			echo "ERROR: No .env file found. Copy .env.example to .env and fill in your values."; \
 			exit 1; \
 		fi \
 	fi
