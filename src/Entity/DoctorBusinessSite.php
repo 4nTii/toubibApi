@@ -46,12 +46,17 @@ class DoctorBusinessSite
     #[Groups(['doctor:read', 'businesssite:read'])]
     private ?array $workingSchedule = null;
 
+    #[ORM\Column(name: 'share_calendar', type: 'boolean', options: ['default' => false])]
+    #[Groups(['doctor:read', 'businesssite:read'])]
+    private bool $shareCalendar = false;
+
     public function __construct()
     {
         $this->isOwner = false;
         $this->isPrimary = false;
         $this->consultationDuration = 30;
         $this->consultationFee = null;
+        $this->shareCalendar = false;
         $this->workingSchedule = [
             "monday"    => ["start" => "08:00", "end" => "18:00", "enabled" => true],
             "tuesday"   => ["start" => "08:00", "end" => "18:00", "enabled" => true],
@@ -135,6 +140,16 @@ class DoctorBusinessSite
     public function setWorkingSchedule(?array $workingSchedule): self
     {
         $this->workingSchedule = $workingSchedule;
+        return $this;
+    }
+
+    public function isShareCalendar(): bool
+    {
+        return $this->shareCalendar;
+    }
+    public function setShareCalendar(bool $shareCalendar): self
+    {
+        $this->shareCalendar = $shareCalendar;
         return $this;
     }
 }

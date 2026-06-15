@@ -86,7 +86,7 @@ INSERT INTO patients (id, user_id, medical_history) VALUES
 (5, 10, 'Hypertension artérielle traitée depuis 2020.');
 
 -- ── Doctor Business Sites ────────────────────────────────────
-INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_primary, consultation_duration, consultation_fee, working_schedule) VALUES
+INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_primary, consultation_duration, consultation_fee, working_schedule, share_calendar) VALUES
 (1, 1, 1, 1, 1, 20, 2500, '{
     "friday": {
         "end": "17:00",
@@ -123,7 +123,7 @@ INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_
         "start": "08:00",
         "enabled": true
     }
-}'),
+}', 0),
 (2, 2, 2, 1, 1, 30, 5000, '{
     "friday": {
         "end": "17:00",
@@ -160,7 +160,7 @@ INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_
         "start": "08:00",
         "enabled": true
     }
-}'),
+}', 0),
 (3, 3, 3, 1, 1, 30, 3500, '{
     "friday": {
         "end": "17:00",
@@ -197,7 +197,7 @@ INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_
         "start": "08:00",
         "enabled": true
     }
-}'),
+}', 0),
 (4, 4, 4, 1, 1, 30, 4500, '{
     "friday": {
         "end": "17:00",
@@ -234,7 +234,7 @@ INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_
         "start": "08:00",
         "enabled": true
     }
-}'),
+}', 0),
 (5, 1, 3, 0, 0, 20, 2500, '{
     "friday": {
         "end": "17:00",
@@ -271,7 +271,7 @@ INSERT INTO doctor_business_site (id, doctor_id, business_site_id, is_owner, is_
         "start": "08:00",
         "enabled": true
     }
-}');
+}', 0);
 
 -- ── Appointments ─────────────────────────────────────────────
 INSERT INTO appointments (id, patient_id, doctor_id, business_site_id, start_time, end_time, status, notes) VALUES

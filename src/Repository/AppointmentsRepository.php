@@ -119,6 +119,38 @@ class AppointmentsRepository extends ServiceEntityRepository
     }
 
     /**
+     * Tous les RDV d'un médecin pour un cabinet donné (tous statuts, y compris annulé).
+     */
+    public function findAllByDoctorAndSite(Doctors $doctor, BusinessSites $businessSite): array
+    {
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.doctor = :doctor')
+            ->andWhere('a.businessSite = :site')
+            ->setParameter('doctor', $doctor)
+            ->setParameter('site', $businessSite)
+            ->orderBy('a.startTime', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Tous les RDV d'un médecin pour un cabinet donné (sans les annulés).
+     */
+    public function findByDoctorAndSite(Doctors $doctor, BusinessSites $businessSite): array
+    {
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.doctor = :doctor')
+            ->andWhere('a.businessSite = :site')
+            ->andWhere('a.status != :canceled')
+            ->setParameter('doctor', $doctor)
+            ->setParameter('site', $businessSite)
+            ->setParameter('canceled', 'canceled')
+            ->orderBy('a.startTime', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Récupère les rendez-vous d'un médecin pour un jour donné et un cabinet
      */
     public function getScheduleByDate(
