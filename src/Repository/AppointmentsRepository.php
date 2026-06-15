@@ -118,6 +118,33 @@ class AppointmentsRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function findByPatientPaginated(Users $user, int $page, int $limit): array
+    {
+        $offset = ($page - 1) * $limit;
+
+        $data = $this->createQueryBuilder('a')
+            ->andWhere('a.patient = :user')
+            ->setParameter('user', $user)
+            ->orderBy('a.startTime', 'DESC')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        $total = (int) $this->createQueryBuilder('a')
+            ->select('COUNT(a.id)')
+            ->andWhere('a.patient = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return [
+            'data'       => $data,
+            'total'      => $total,
+            'totalPages' => (int) ceil($total / $limit),
+        ];
+    }
+
     /**
      * Tous les RDV d'un médecin pour un cabinet donné (tous statuts, y compris annulé).
      */

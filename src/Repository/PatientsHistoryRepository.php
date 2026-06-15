@@ -44,6 +44,33 @@ class PatientsHistoryRepository extends ServiceEntityRepository
         return $this->findBy(['user' => $user], ['date' => 'DESC']);
     }
 
+    public function findByUserPaginated(Users $user, int $page, int $limit): array
+    {
+        $offset = ($page - 1) * $limit;
+
+        $data = $this->createQueryBuilder('h')
+            ->andWhere('h.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('h.date', 'DESC')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        $total = (int) $this->createQueryBuilder('h')
+            ->select('COUNT(h.id)')
+            ->andWhere('h.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return [
+            'data'       => $data,
+            'total'      => $total,
+            'totalPages' => (int) ceil($total / $limit),
+        ];
+    }
+
     public function findByDoctor(Doctors $doctor): array
     {
         return $this->findBy(['doctor' => $doctor], ['date' => 'DESC']);

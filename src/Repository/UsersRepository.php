@@ -79,6 +79,33 @@ class UsersRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function findByMainDoctorPaginated(\App\Entity\Doctors $doctor, int $page, int $limit): array
+    {
+        $offset = ($page - 1) * $limit;
+
+        $data = $this->createQueryBuilder('u')
+            ->andWhere('u.mainDoctor = :doctor')
+            ->setParameter('doctor', $doctor)
+            ->orderBy('u.lastName', 'ASC')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        $total = (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.mainDoctor = :doctor')
+            ->setParameter('doctor', $doctor)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return [
+            'data'       => $data,
+            'total'      => $total,
+            'totalPages' => (int) ceil($total / $limit),
+        ];
+    }
+
     /**
      * Récupère les utilisateurs récemment connectés
      */

@@ -26,12 +26,20 @@ class ProfileController extends AbstractController
         $userData = $this->json($user, 200, [], ['groups' => ['user:read']])->getContent();
         $userData = json_decode($userData, true);
 
-        $response = [
-            'status' => true,
-            'data'   => $userData
-        ];
+        $mainDoctor = $user->getMainDoctor();
+        $userData['mainDoctor'] = null;
+        if ($mainDoctor) {
+            $doctorUser = $mainDoctor->getUser();
+            $userData['mainDoctor'] = [
+                'id'         => $mainDoctor->getId(),
+                'firstName'  => $doctorUser->getFirstName(),
+                'lastName'   => $doctorUser->getLastName(),
+                'speciality' => $mainDoctor->getSpeciality()?->getName(),
+                'photo'      => $mainDoctor->getProfilePicture(),
+            ];
+        }
 
-        return $this->json($response, 200);
+        return $this->json(['status' => true, 'data' => $userData], 200);
     }
 
     public function getAppointments(
@@ -109,13 +117,16 @@ class ProfileController extends AbstractController
         }
 
         $allowedFields = [
-            'firstName' => 'setFirstName',
-            'lastName'  => 'setLastName',
-            'birthDay'  => 'setBirthDay',
-            'gender'    => 'setGender',
-            'address'   => 'setAddress',
-            'email'     => 'setEmail'
+            'firstName'    => 'setFirstName',
+            'lastName'     => 'setLastName',
+            'birthDay'     => 'setBirthDay',
+            'gender'       => 'setGender',
+            'address'      => 'setAddress',
+            'email'        => 'setEmail',
+            'socialNumber' => 'setSocialNumber',
         ];
+
+        $nullableFields = ['address', 'birthDay', 'socialNumber'];
 
         $unexpectedFields = array_diff(array_keys($data), array_keys($allowedFields));
         if (!empty($unexpectedFields)) {
@@ -126,22 +137,42 @@ class ProfileController extends AbstractController
         }
 
         foreach ($allowedFields as $field => $setter) {
-            if (array_key_exists($field, $data)) {
-                $value = $data[$field];
-
-                if ($field === 'birthDay' && is_string($value)) {
-                    try {
-                        $value = new \DateTime($value);
-                    } catch (\Exception $e) {
-                        return $this->json([
-                            'status'  => false,
-                            'message' => 'Format de date invalide, utilisez ISO 8601 (ex: 1990-05-21)'
-                        ], 400);
-                    }
-                }
-
-                $user->$setter($value);
+            if (!array_key_exists($field, $data)) {
+                continue;
             }
+
+            $value = $data[$field];
+
+            if ($value === null || $value === '') {
+                if (!in_array($field, $nullableFields)) {
+                    return $this->json([
+                        'status'  => false,
+                        'message' => "Le champ '$field' ne peut pas être vide"
+                    ], 400);
+                }
+                $user->$setter(null);
+                continue;
+            }
+
+            if ($field === 'email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                return $this->json([
+                    'status'  => false,
+                    'message' => "Format d'email invalide"
+                ], 400);
+            }
+
+            if ($field === 'birthDay') {
+                try {
+                    $value = new \DateTime($value);
+                } catch (\Exception $e) {
+                    return $this->json([
+                        'status'  => false,
+                        'message' => 'Format de date invalide, utilisez ISO 8601 (ex: 1990-05-21)'
+                    ], 400);
+                }
+            }
+
+            $user->$setter($value);
         }
 
         $entityManager->flush();
