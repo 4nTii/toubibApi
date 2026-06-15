@@ -101,7 +101,7 @@ app_user_appointments:
 # ==============================================================================
 app_doctors_login:
     path: /api/auth/doctor/login{slash}
-    controller: App\Controller\Doctors\DoctorsController::login
+    controller: App\Controller\Auth\DoctorAuthController::login
     methods: POST
     requirements:
         slash: /?
@@ -127,19 +127,66 @@ app_doctors_update_me:
     requirements:
         slash: /?
 
+app_doctors_list_patients:
+    path: /api/doctor/patients{slash}
+    controller: App\Controller\Doctors\DoctorPatientsController::listPatients
+    methods: GET
+    requirements:
+        slash: /?
+
 app_doctors_create_patient:
     path: /api/doctor/patients{slash}
-    controller: App\Controller\Doctors\DoctorsController::createPatient
+    controller: App\Controller\Doctors\DoctorPatientsController::createPatient
     methods: POST
     requirements:
         slash: /?
 
 app_doctors_search_patients:
     path: /api/doctor/patients/search{slash}
-    controller: App\Controller\Doctors\DoctorsController::searchPatients
+    controller: App\Controller\Doctors\DoctorPatientsController::searchPatients
     methods: GET
     requirements:
         slash: /?
+
+app_doctors_update_patient:
+    path: /api/doctor/patients/{id}{slash}
+    controller: App\Controller\Doctors\DoctorPatientsController::updatePatient
+    methods: PATCH
+    requirements:
+        slash: /?
+        id: '\d+'
+
+app_doctors_remove_patient:
+    path: /api/doctor/patients/{id}{slash}
+    controller: App\Controller\Doctors\DoctorPatientsController::removePatient
+    methods: DELETE
+    requirements:
+        slash: /?
+        id: '\d+'
+
+app_doctors_patient_appointments:
+    path: /api/doctor/patients/{id}/appointments{slash}
+    controller: App\Controller\Doctors\DoctorPatientsController::getPatientAppointments
+    methods: GET
+    requirements:
+        slash: /?
+        id: '\d+'
+
+app_doctors_patient_history:
+    path: /api/doctor/patients/{id}/history{slash}
+    controller: App\Controller\Doctors\DoctorPatientsController::getPatientHistory
+    methods: GET
+    requirements:
+        slash: /?
+        id: '\d+'
+
+app_doctors_patient_history_add:
+    path: /api/doctor/patients/{id}/history{slash}
+    controller: App\Controller\Doctors\DoctorPatientsController::addPatientHistory
+    methods: POST
+    requirements:
+        slash: /?
+        id: '\d+'
 
 app_doctors_get_doctor:
     path: /api/doctor/{id}{slash}
@@ -258,14 +305,14 @@ app_doctor_calendar:
 
 app_doctor_scheduled_appointments:
     path: /api/doctor/appointments/scheduled{slash}
-    controller: App\Controller\Doctors\DoctorsAppointment::getScheduledAppointments
+    controller: App\Controller\Doctors\AppointmentController::getScheduledAppointments
     methods: GET
     requirements:
         slash: /?
 
 app_doctor_update_appointment:
     path: /api/doctor/appointments/{id}{slash}
-    controller: App\Controller\Doctors\DoctorsAppointment::updateAppointment
+    controller: App\Controller\Doctors\AppointmentController::updateAppointment
     methods: PATCH
     requirements:
         slash: /?
@@ -273,7 +320,7 @@ app_doctor_update_appointment:
 
 app_doctor_update_appointment_status:
     path: /api/doctor/appointments/{id}/status{slash}
-    controller: App\Controller\Doctors\DoctorsAppointment::updateAppointmentStatus
+    controller: App\Controller\Doctors\AppointmentController::updateAppointmentStatus
     methods: PATCH
     requirements:
         slash: /?
@@ -281,14 +328,14 @@ app_doctor_update_appointment_status:
 
 app_available_appointment:
     path: /api/doctor/{id}/get-appointment/start/{startDate}/end/{endDate}{slash}
-    controller: App\Controller\Doctors\DoctorsAppointment::getDoctorAvailableAppointment
+    controller: App\Controller\Doctors\AppointmentController::getDoctorAvailableAppointment
     methods: GET
     requirements:
         slash: /?
 
 app_set_appointment:
     path: /api/doctor/{idDoctor}/set-appointment{slash}
-    controller: App\Controller\Doctors\DoctorsAppointment::setAppointment
+    controller: App\Controller\Doctors\AppointmentController::setAppointment
     methods: POST
     requirements:
         slash: /?

@@ -18,6 +18,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 #[ORM\Table(name: 'users')]
 #[UniqueEntity(fields: ['email'], message: 'Ce Email est déjà utilisé')]
 #[UniqueEntity(fields: ['phone'], message: 'Ce numéro est déjà utilisé')]
+#[UniqueEntity(fields: ['socialNumber'], message: 'Ce numéro de sécurité sociale est déjà utilisé')]
 class Users implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -114,6 +115,15 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 255)]
     #[Ignore]
     private string $userToken;
+
+    #[ORM\Column(name: 'social_number', type: 'string', length: 50, unique: true, nullable: true)]
+    #[Groups(['user:read'])]
+    private ?string $socialNumber = null;
+
+    #[ORM\ManyToOne(targetEntity: Doctors::class)]
+    #[ORM\JoinColumn(name: 'main_doctor_id', nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['user:read'])]
+    private ?Doctors $mainDoctor = null;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: UsersPasswordResetToken::class, cascade: ['remove'])]
     private Collection $passwordResetTokens;
@@ -322,6 +332,26 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUserToken(string $userToken): self
     {
         $this->userToken = $userToken;
+        return $this;
+    }
+
+    public function getSocialNumber(): ?string
+    {
+        return $this->socialNumber;
+    }
+    public function setSocialNumber(?string $socialNumber): self
+    {
+        $this->socialNumber = $socialNumber;
+        return $this;
+    }
+
+    public function getMainDoctor(): ?Doctors
+    {
+        return $this->mainDoctor;
+    }
+    public function setMainDoctor(?Doctors $mainDoctor): self
+    {
+        $this->mainDoctor = $mainDoctor;
         return $this;
     }
 
