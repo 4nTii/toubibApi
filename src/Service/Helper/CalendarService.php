@@ -112,7 +112,7 @@ class CalendarService
     private function formatAppointments(array $appointments): array
     {
         return array_map(function (Appointments $appt) {
-            $patientUser = $appt->getPatient()->getUser();
+            $patientUser = $appt->getPatient();
             $fullName    = $patientUser->getFirstName() . ' ' . $patientUser->getLastName();
 
             return [

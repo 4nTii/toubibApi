@@ -4,7 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Prescriptions;
 use App\Entity\Doctors;
-use App\Entity\Patients;
+use App\Entity\Users;
 use App\Entity\Appointments;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -43,9 +43,9 @@ class PrescriptionsRepository extends ServiceEntityRepository
     /**
      * Récupère toutes les prescriptions d'un patient
      */
-    public function findByPatient(Patients $patient): array
+    public function findByPatient(Users $user): array
     {
-        return $this->findBy(['patient' => $patient], ['createdAt' => 'DESC']);
+        return $this->findBy(['patient' => $user], ['createdAt' => 'DESC']);
     }
 
     /**
@@ -67,11 +67,11 @@ class PrescriptionsRepository extends ServiceEntityRepository
     /**
      * Récupère la dernière prescription d'un patient
      */
-    public function findLastByPatient(Patients $patient): ?Prescriptions
+    public function findLastByPatient(Users $user): ?Prescriptions
     {
         return $this->createQueryBuilder('p')
-            ->andWhere('p.patient = :patient')
-            ->setParameter('patient', $patient)
+            ->andWhere('p.patient = :user')
+            ->setParameter('user', $user)
             ->orderBy('p.createdAt', 'DESC')
             ->setMaxResults(1)
             ->getQuery()

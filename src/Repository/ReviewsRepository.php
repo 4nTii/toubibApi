@@ -4,7 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Reviews;
 use App\Entity\Doctors;
-use App\Entity\Patients;
+use App\Entity\Users;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -50,9 +50,9 @@ class ReviewsRepository extends ServiceEntityRepository
     /**
      * Récupère tous les avis d'un patient
      */
-    public function findByPatient(Patients $patient): array
+    public function findByPatient(Users $user): array
     {
-        return $this->findBy(['patient' => $patient], ['createdAt' => 'DESC']);
+        return $this->findBy(['patient' => $user], ['createdAt' => 'DESC']);
     }
 
     /**

@@ -4,7 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Appointments;
 use App\Entity\Doctors;
-use App\Entity\Patients;
+use App\Entity\Users;
 use App\Entity\BusinessSites;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -43,9 +43,9 @@ class AppointmentsRepository extends ServiceEntityRepository
     /**
      * Récupère tous les rendez-vous d'un patient
      */
-    public function findByPatient(Patients $patient): array
+    public function findByPatient(Users $user): array
     {
-        return $this->findBy(['patient' => $patient], ['startTime' => 'ASC']);
+        return $this->findBy(['patient' => $user], ['startTime' => 'ASC']);
     }
 
     /**
@@ -67,12 +67,12 @@ class AppointmentsRepository extends ServiceEntityRepository
     /**
      * Récupère les rendez-vous futurs pour un patient ou un médecin
      */
-    public function findFutureAppointmentsByPatient(Patients $patient): array
+    public function findFutureAppointmentsByPatient(Users $user): array
     {
         return $this->createQueryBuilder('a')
-            ->andWhere('a.patient = :patient')
+            ->andWhere('a.patient = :user')
             ->andWhere('a.startTime > :now')
-            ->setParameter('patient', $patient)
+            ->setParameter('user', $user)
             ->setParameter('now', new \DateTime())
             ->orderBy('a.startTime', 'ASC')
             ->getQuery()
@@ -94,12 +94,12 @@ class AppointmentsRepository extends ServiceEntityRepository
     /**
      * Récupère les rendez-vous passés pour un patient ou un médecin
      */
-    public function findPastAppointmentsByPatient(Patients $patient): array
+    public function findPastAppointmentsByPatient(Users $user): array
     {
         return $this->createQueryBuilder('a')
-            ->andWhere('a.patient = :patient')
+            ->andWhere('a.patient = :user')
             ->andWhere('a.endTime < :now')
-            ->setParameter('patient', $patient)
+            ->setParameter('user', $user)
             ->setParameter('now', new \DateTime())
             ->orderBy('a.startTime', 'DESC')
             ->getQuery()
