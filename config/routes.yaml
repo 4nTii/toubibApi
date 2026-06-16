@@ -96,6 +96,20 @@ app_user_appointments:
     requirements:
         slash: /?
 
+app_user_change_password:
+    path: /api/users/me/change-password{slash}
+    controller: App\Controller\User\ProfileController::changePassword
+    methods: PATCH
+    requirements:
+        slash: /?
+
+app_user_add_card:
+    path: /api/users/me/card{slash}
+    controller: App\Controller\User\ProfileController::addOrUpdateCard
+    methods: PATCH
+    requirements:
+        slash: /?
+
 # ==============================================================================
 # Doctors
 # ==============================================================================

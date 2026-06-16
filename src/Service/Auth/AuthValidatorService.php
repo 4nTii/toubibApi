@@ -24,9 +24,26 @@ class AuthValidatorService
 
     public function validatePassword(string $password): ?string
     {
-        if (strlen($password) < 6) {
-            return "Le mot de passe doit contenir au moins 6 caractères";
+        if (strlen($password) < 8) {
+            return "Le mot de passe doit contenir au moins 8 caractères";
         }
+
+        if (!preg_match('/[A-Z]/', $password)) {
+            return "Le mot de passe doit contenir au moins une majuscule";
+        }
+
+        if (!preg_match('/[a-z]/', $password)) {
+            return "Le mot de passe doit contenir au moins une minuscule";
+        }
+
+        if (!preg_match('/[0-9]/', $password)) {
+            return "Le mot de passe doit contenir au moins un chiffre";
+        }
+
+        if (!preg_match('/[!@#$%^&*()_+\-=\[\]{};:\'",.<>?\/\\|`~]/', $password)) {
+            return "Le mot de passe doit contenir au moins un caractère spécial (!@#$%^&* etc.)";
+        }
+
         return null;
     }
 

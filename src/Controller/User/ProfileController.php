@@ -4,6 +4,7 @@ namespace App\Controller\User;
 
 use App\Entity\Appointments;
 use App\Repository\AppointmentsRepository;
+use App\Repository\UserCardRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -11,7 +12,7 @@ use Symfony\Component\HttpFoundation\Request as HttpFoundationRequest;
 
 class ProfileController extends AbstractController
 {
-    public function me(): JsonResponse
+    public function me(UserCardRepository $userCardRepository): JsonResponse
     {
         /** @var \App\Entity\Users $user */
         $user = $this->getUser();
@@ -36,6 +37,22 @@ class ProfileController extends AbstractController
                 'lastName'   => $doctorUser->getLastName(),
                 'speciality' => $mainDoctor->getSpeciality()?->getName(),
                 'photo'      => $mainDoctor->getProfilePicture(),
+            ];
+        }
+
+        // Get user card if exists
+        $userCard = $userCardRepository->findOneBy(['user' => $user]);
+        $userData['userCard'] = null;
+        if ($userCard) {
+            // Mask card number to show only last 4 digits
+            $cardNumber = $userCard->getCardNumber();
+            $maskedCardNumber = '•••• •••• •••• ' . substr($cardNumber, -4);
+
+            $userData['userCard'] = [
+                'id'         => $userCard->getId(),
+                'cardHolder' => $userCard->getCardHolder(),
+                'cardNumber' => $maskedCardNumber,
+                'expireDate' => $userCard->getExpireDate(),
             ];
         }
 
@@ -180,6 +197,164 @@ class ProfileController extends AbstractController
         return $this->json([
             'status'  => true,
             'message' => 'Profil mis à jour avec succès'
+        ], 200);
+    }
+
+    public function changePassword(
+        HttpFoundationRequest $request,
+        EntityManagerInterface $entityManager,
+        \Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface $passwordHasher,
+        \App\Service\Auth\AuthValidatorService $authValidator
+    ): JsonResponse
+    {
+        /** @var \App\Entity\Users $user */
+        $user = $this->getUser();
+
+        if (!$user) {
+            return $this->json([
+                'status' => false,
+                'message' => 'Utilisateur non authentifié'
+            ], 401);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        if (!isset($data['oldPassword']) || !isset($data['newPassword'])) {
+            return $this->json([
+                'status' => false,
+                'message' => 'Les champs oldPassword et newPassword sont requis'
+            ], 400);
+        }
+
+        // Verify old password
+        if (!$passwordHasher->isPasswordValid($user, $data['oldPassword'])) {
+            return $this->json([
+                'status' => false,
+                'message' => 'L\'ancien mot de passe est incorrect'
+            ], 401);
+        }
+
+        // Validate new password strength
+        $passwordError = $authValidator->validatePassword($data['newPassword']);
+        if ($passwordError) {
+            return $this->json([
+                'status' => false,
+                'message' => $passwordError
+            ], 400);
+        }
+
+        // Hash and set new password
+        $hashedPassword = $passwordHasher->hashPassword($user, $data['newPassword']);
+        $user->setPassword($hashedPassword);
+        $entityManager->flush();
+
+        return $this->json([
+            'status' => true,
+            'message' => 'Mot de passe mis à jour avec succès'
+        ], 200);
+    }
+
+    public function addOrUpdateCard(
+        HttpFoundationRequest $request,
+        EntityManagerInterface $entityManager,
+        \App\Repository\UserCardRepository $userCardRepository
+    ): JsonResponse
+    {
+        /** @var \App\Entity\Users $user */
+        $user = $this->getUser();
+
+        if (!$user) {
+            return $this->json([
+                'status' => false,
+                'message' => 'Utilisateur non authentifié'
+            ], 401);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        // Validate required fields
+        if (!isset($data['card_holder']) || !isset($data['card_number']) || !isset($data['expire_date']) || !isset($data['card_cvv'])) {
+            return $this->json([
+                'status' => false,
+                'message' => 'Les champs card_holder, card_number, expire_date et card_cvv sont requis'
+            ], 400);
+        }
+
+        // Validate card number (16 digits)
+        $cardNumber = preg_replace('/\D/', '', $data['card_number']);
+        if (strlen($cardNumber) !== 16) {
+            return $this->json([
+                'status' => false,
+                'message' => 'Le numéro de carte doit contenir 16 chiffres'
+            ], 400);
+        }
+
+        // Validate CVV (3-4 digits)
+        $cvv = preg_replace('/\D/', '', $data['card_cvv']);
+        if (strlen($cvv) < 3 || strlen($cvv) > 4) {
+            return $this->json([
+                'status' => false,
+                'message' => 'Le CVV doit contenir 3 ou 4 chiffres'
+            ], 400);
+        }
+
+        // Validate expiry date (MM/YY format and must be future)
+        if (!preg_match('/^\d{2}\/\d{2}$/', $data['expire_date'])) {
+            return $this->json([
+                'status' => false,
+                'message' => 'La date d\'expiration doit être au format MM/AA'
+            ], 400);
+        }
+
+        list($month, $year) = explode('/', $data['expire_date']);
+        $month = (int)$month;
+        $year = (int)$year;
+
+        if ($month < 1 || $month > 12) {
+            return $this->json([
+                'status' => false,
+                'message' => 'Le mois d\'expiration doit être entre 01 et 12'
+            ], 400);
+        }
+
+        // Check if expiry date is in the future
+        $currentYear = date('y');
+        $currentMonth = date('m');
+        if ($year < $currentYear || ($year == $currentYear && $month < $currentMonth)) {
+            return $this->json([
+                'status' => false,
+                'message' => 'La date d\'expiration doit être une date future'
+            ], 400);
+        }
+
+        // Get or create user card
+        $userCard = $userCardRepository->findOneBy(['user' => $user]);
+        if (!$userCard) {
+            $userCard = new \App\Entity\UserCard();
+            $userCard->setUser($user);
+        }
+
+        // Update card details
+        $userCard->setCardHolder($data['card_holder']);
+        $userCard->setCardNumber($cardNumber);
+        $userCard->setExpireDate($data['expire_date']);
+        $userCard->setCardCvv($cvv);
+
+        $entityManager->persist($userCard);
+        $entityManager->flush();
+
+        // Mask card number to show only last 4 digits
+        $maskedCardNumber = '•••• •••• •••• ' . substr($userCard->getCardNumber(), -4);
+
+        return $this->json([
+            'status' => true,
+            'message' => 'Carte bancaire ajoutée avec succès',
+            'data' => [
+                'id' => $userCard->getId(),
+                'cardHolder' => $userCard->getCardHolder(),
+                'cardNumber' => $maskedCardNumber,
+                'expireDate' => $userCard->getExpireDate(),
+            ]
         ], 200);
     }
 }
