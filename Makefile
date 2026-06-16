@@ -40,7 +40,7 @@ all: ## Run everything: build -> up -> setup (migrate + jwt + cache)
 	docker compose build --build-arg http_proxy="" --build-arg https_proxy="" --build-arg HTTP_PROXY="" --build-arg HTTPS_PROXY="" --build-arg NO_PROXY="*"
 	@echo ""
 	@echo "--- Starting containers -----------------------------"
-	docker compose up -d
+	@$(MAKE) --no-print-directory up
 	@echo "Waiting for MySQL..."
 	@$(WAIT_FOR_DB)
 	@echo ""
@@ -66,12 +66,19 @@ help: ## Show this help
 
 # --- Docker lifecycle ---------------------------------------------------------
 
-build: ## Build Docker images
+build: ## Build Docker images (no cache)
 	docker compose build --no-cache --build-arg http_proxy="" --build-arg https_proxy="" --build-arg HTTP_PROXY="" --build-arg HTTPS_PROXY="" --build-arg NO_PROXY="*"
+
+rebuild: ## Rebuild and restart app only (safe after .env or Dockerfile changes)
+	docker compose build --build-arg http_proxy="" --build-arg https_proxy="" --build-arg HTTP_PROXY="" --build-arg HTTPS_PROXY="" --build-arg NO_PROXY="*" app
+	docker compose up -d --force-recreate app
+	docker compose exec nginx nginx -s reload 2>/dev/null || true
+	@echo "App rebuilt and restarted."
 
 up: ## Start containers (dev)
 	docker compose up -d
-	@echo "App       : http://localhost:8000"
+	docker compose exec nginx nginx -s reload 2>/dev/null || true
+	@echo "App       : https://localhost:8000"
 	@echo "Mails     : http://localhost:8025"
 	@echo "phpMyAdmin: http://localhost:8081"
 

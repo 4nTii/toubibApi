@@ -125,7 +125,9 @@ class FileUploadHelper
         $fileSize = @ftp_size($conn, $filePath);
         if ($fileSize === -1) {
             ftp_close($conn);
-            throw new \Exception("Fichier introuvable sur le FTP: $filePath");
+            // throw error peut causé des problemes si un mouvement ftp ou aprés une purge
+            //throw new \Exception("Fichier introuvable sur le FTP: $filePath");
+            return true;
         }
 
         // gestion du warning de ftp_delete si il retourne false
