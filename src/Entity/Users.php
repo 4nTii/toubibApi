@@ -161,7 +161,7 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     }
     public function setFirstName(string $firstName): self
     {
-        $this->firstName = $firstName;
+        $this->firstName = mb_convert_case(trim($firstName), MB_CASE_TITLE, 'UTF-8');
         return $this;
     }
 
@@ -171,7 +171,7 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     }
     public function setLastName(string $lastName): self
     {
-        $this->lastName = $lastName;
+        $this->lastName = mb_strtoupper(trim($lastName), 'UTF-8');
         return $this;
     }
 

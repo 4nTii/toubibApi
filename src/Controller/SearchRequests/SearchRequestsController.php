@@ -49,12 +49,14 @@ class SearchRequestsController extends AbstractController
             ));
 
             $result['doctors'][] = [
-                'id' => $doctor->getId(),
-                'name' => $user->getFullName(),
-                'gender' => $user->getGender(),
+                'id'         => $doctor->getId(),
+                'firstName'  => $user->getFirstName(),
+                'lastName'   => $user->getLastName(),
+                'name'       => $user->getFullName(),
+                'gender'     => $user->getGender(),
                 'speciality' => $doctor->getSpeciality()?->getName(),
-                'image' => $ftpTarget . ltrim($doctor->getProfilePicture(), '/'),
-                'cities' => array_values($cities)
+                'image'      => $ftpTarget . ltrim($doctor->getProfilePicture(), '/'),
+                'cities'     => array_values($cities)
             ];
         }
 
@@ -146,6 +148,8 @@ class SearchRequestsController extends AbstractController
 
             $data[] = [
                 'id'                      => $doctor->getId(),
+                'firstName'               => $user->getFirstName(),
+                'lastName'                => $user->getLastName(),
                 'fullName'                => $user->getFullName(),
                 'gender'                  => $user->getGender(),
                 'speciality'              => $doctor->getSpeciality()?->getName(),

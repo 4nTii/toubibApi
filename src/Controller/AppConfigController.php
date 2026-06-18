@@ -33,9 +33,10 @@ class AppConfigController extends AbstractController
             'response' => [
                 'appName' => $config->getAppName(),
                 'version' => $config->getVersion(),
+                'env' => $this->getParameter('kernel.environment'),
                 'logo' => $config->getLogo(),
                 'maintenance' => $config->isMaintenance(),
-                'updatedAt' => $config->getUpdateAt()?->format('Y-m-d H:i:s')
+                'updatedAt' => $config->getUpdateAt()?->format('Y-m-d H:i:s'),
             ]
         ], 200);
     }

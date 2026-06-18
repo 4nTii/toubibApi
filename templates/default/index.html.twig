@@ -9,6 +9,7 @@
             <img src="{{ asset('images/toubib.png') }}" alt="Logo" width="100">
         </center>
         <ul>
+            <li><strong>Environnement :</strong> {{ env }}</li>
             <li><strong>Nom de l'app :</strong> {{ config.appName }}</li>
             <li><strong>Version :</strong> {{ config.version }}</li>
             <li><strong>Maintenance :</strong> {{ config.maintenance ? 'Oui' : 'Non' }}</li>

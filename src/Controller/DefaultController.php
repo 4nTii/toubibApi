@@ -21,6 +21,7 @@ final class DefaultController extends AbstractController
 
         return $this->render('default/index.html.twig', [
             'config' => $config,
+            'env'    => $this->getParameter('kernel.environment'),
         ]);
     }
 }

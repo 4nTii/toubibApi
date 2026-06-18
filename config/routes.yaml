@@ -210,7 +210,7 @@ app_doctors_patient_history_add:
         id: '\d+'
 
 app_doctors_get_doctor:
-    path: /api/doctor/{id}{slash}
+    path: /api/doctor/{id}/{slug}{slash}
     controller: App\Controller\Doctors\DoctorsController::getDoctorInfo
     methods: GET
     requirements:

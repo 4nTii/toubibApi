@@ -64,13 +64,20 @@ class DoctorsController extends AbstractController
 
     public function getDoctorInfo(
         int $id,
+        string $slug,
         DoctorsRepository $doctorsRepository,
         BusinessSitesRepository $businessSitesRepository,
         AppointmentsHelper $appointmentsHelper
     ): JsonResponse {
         $doctor = $doctorsRepository->find($id);
         if (!$doctor) {
-            return $this->json(['status' => false, 'message' => 'Cet utilisateur ne correspond pas à un médecin'], 404);
+            return $this->json(['status' => false, 'message' => 'Médecin introuvable'], 404);
+        }
+
+        $slugify = fn(string $s): string => strtolower(preg_replace('/\s+/', '-', trim($s)));
+        $expected = $slugify($doctor->getUser()->getFirstName()) . '_' . $slugify($doctor->getUser()->getLastName());
+        if ($slug !== $expected) {
+            return $this->json(['status' => false, 'message' => 'Médecin introuvable'], 404);
         }
 
         $ftpTarget = $this->getParameter('vite_ftp_target');

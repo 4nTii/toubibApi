@@ -162,7 +162,12 @@ class DoctorsRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('d')
             ->select('d.id')
             ->join('d.user', 'u')
-            ->where('LOWER(u.firstName) LIKE :name OR LOWER(u.lastName) LIKE :name')
+            ->where(
+                'LOWER(u.firstName) LIKE :name
+                 OR LOWER(u.lastName) LIKE :name
+                 OR LOWER(CONCAT(u.firstName, \' \', u.lastName)) LIKE :name
+                 OR LOWER(CONCAT(u.lastName, \' \', u.firstName)) LIKE :name'
+            )
             ->setParameter('name', $name);
 
         if ($onlyActive !== null) {
