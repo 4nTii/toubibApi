@@ -3,7 +3,9 @@
 namespace App\Controller\Auth;
 
 use App\Entity\LoggingAttempt;
+use App\Entity\RefreshToken;
 use App\Repository\LoggingAttemptRepository;
+use App\Repository\RefreshTokenRepository;
 use App\Repository\UsersRepository;
 use App\Service\Auth\LoggingSecurityService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -23,7 +25,8 @@ class DoctorAuthController extends AbstractController
         UserPasswordHasherInterface $userPasswordHasher,
         EntityManagerInterface $entityManger,
         LoggingAttemptRepository $loggingAttemptRepository,
-        LoggingSecurityService $loggingSecurity
+        LoggingSecurityService $loggingSecurity,
+        RefreshTokenRepository $refreshTokenRepository
     ): JsonResponse {
         $data      = json_decode($request->getContent(), true);
         $userAgent = $request->headers->get('User-Agent');
@@ -52,15 +55,19 @@ class DoctorAuthController extends AbstractController
             return $this->json(['status' => false, 'message' => 'Veuillez vérifier votre compte, un courriel de vérification a été envoyé à votre adresse courriel.'], 403);
         }
 
-        $token = $jwtManager->create($user);
+        // Revoke all existing refresh tokens
+        $refreshTokenRepository->revokeAllByUser($user);
 
-        $cookie = Cookie::create('app_auth')
-            ->withValue($token)
-            ->withHttpOnly(true)
-            ->withSecure(true)
-            ->withSameSite('none')
-            ->withPath('/')
-            ->withExpires(new \DateTime('+1 hour'));
+        // Generate access token (1 hour)
+        $accessToken = $jwtManager->create($user);
+
+        // Generate refresh token (7 days)
+        $refreshTokenString = bin2hex(random_bytes(32));
+        $refreshToken = new RefreshToken();
+        $refreshToken->setUser($user);
+        $refreshToken->setToken($refreshTokenString);
+        $refreshToken->setExpiresAt(new \DateTime('+7 days'));
+        $entityManger->persist($refreshToken);
 
         $user->setLastLogin(new \DateTime());
         $entityManger->flush();
@@ -68,9 +75,28 @@ class DoctorAuthController extends AbstractController
         $loggingAttemptRepository->deleteByEmail($user->getEmail());
         $loggingAttemptRepository->deleteByIpAddress($userIp);
 
+        // Access token cookie (HttpOnly)
+        $accessCookie = Cookie::create('app_auth')
+            ->withValue($accessToken)
+            ->withHttpOnly(true)
+            ->withSecure(true)
+            ->withSameSite('none')
+            ->withPath('/')
+            ->withExpires(new \DateTime('+1 hour'));
+
+        // Refresh token cookie (HttpOnly)
+        $refreshCookie = Cookie::create('app_refresh')
+            ->withValue($refreshTokenString)
+            ->withHttpOnly(true)
+            ->withSecure(true)
+            ->withSameSite('none')
+            ->withPath('/')
+            ->withExpires(new \DateTime('+7 days'));
+
         $response = $this->json(['status' => true, 'email' => $user->getEmail()]);
-        $response->headers->setCookie($cookie);
-        $response->headers->set('Authorization', 'Bearer ' . $token);
+        $response->headers->setCookie($accessCookie);
+        $response->headers->setCookie($refreshCookie);
+        $response->headers->set('Authorization', 'Bearer ' . $accessToken);
 
         return $response;
     }

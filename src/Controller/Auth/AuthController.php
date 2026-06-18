@@ -3,9 +3,11 @@
 namespace App\Controller\Auth;
 
 use App\Entity\LoggingAttempt;
+use App\Entity\RefreshToken;
 use App\Entity\Users;
 use App\Entity\UsersPasswordResetToken;
 use App\Repository\LoggingAttemptRepository;
+use App\Repository\RefreshTokenRepository;
 use App\Repository\UsersPasswordResetTokenRepository;
 use App\Repository\UsersRepository;
 use DateTime;
@@ -30,7 +32,8 @@ class AuthController extends AbstractController
         UserPasswordHasherInterface $userPasswordHasher,
         EntityManagerInterface $entityManger,
         LoggingAttemptRepository $loggingAttemptRepository,
-        LoggingSecurityService $loggingSecurity
+        LoggingSecurityService $loggingSecurity,
+        RefreshTokenRepository $refreshTokenRepository
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $userAgent = $request->headers->get('User-Agent');
@@ -68,40 +71,76 @@ class AuthController extends AbstractController
             ], 403);
         }
 
-        // Generation du token
-        $token = $jwtManager->create($user);
+        // Revoke all existing refresh tokens
+        $refreshTokenRepository->revokeAllByUser($user);
 
-        // Cookie HttpOnly
-        $cookie = Cookie::create('app_auth')
-            ->withValue($token)
-            ->withHttpOnly(true)
-            ->withSecure(true)
-            ->withSameSite('none')
-            ->withPath('/')
-            ->withExpires(new \DateTime('+1 hour'));
+        // Generate access token (1 hour)
+        $accessToken = $jwtManager->create($user);
 
-        // update user + nettoyage logs
+        // Generate refresh token (7 days)
+        $refreshTokenString = bin2hex(random_bytes(32));
+        $refreshToken = new RefreshToken();
+        $refreshToken->setUser($user);
+        $refreshToken->setToken($refreshTokenString);
+        $refreshToken->setExpiresAt(new \DateTime('+7 days'));
+        $entityManger->persist($refreshToken);
+
+        // Update user + cleanup logs
         $user->setLastLogin(new \DateTime());
         $entityManger->flush();
 
         $loggingAttemptRepository->deleteByEmail($user->getEmail());
         $loggingAttemptRepository->deleteByIpAddress($userIp);
 
-        // cookie + header Authorization
+        // Access token cookie (HttpOnly)
+        $accessCookie = Cookie::create('app_auth')
+            ->withValue($accessToken)
+            ->withHttpOnly(true)
+            ->withSecure(true)
+            ->withSameSite('none')
+            ->withPath('/')
+            ->withExpires(new \DateTime('+1 hour'));
+
+        // Refresh token cookie (HttpOnly)
+        $refreshCookie = Cookie::create('app_refresh')
+            ->withValue($refreshTokenString)
+            ->withHttpOnly(true)
+            ->withSecure(true)
+            ->withSameSite('none')
+            ->withPath('/')
+            ->withExpires(new \DateTime('+7 days'));
+
+        // Response with both cookies
         $response = $this->json([
             'status' => true,
             'email'  => $user->getEmail(),
         ]);
 
-        $response->headers->setCookie($cookie);
-        $response->headers->set('Authorization', 'Bearer ' . $token);
+        $response->headers->setCookie($accessCookie);
+        $response->headers->setCookie($refreshCookie);
+        $response->headers->set('Authorization', 'Bearer ' . $accessToken);
 
         return $response;
     }
 
-    public function logout(): JsonResponse
-    {
-        $response = new JsonResponse(['message' => 'Logged out']);
+    public function logout(
+        HttpFoundationRequest $request,
+        RefreshTokenRepository $refreshTokenRepository,
+        EntityManagerInterface $entityManger
+    ): JsonResponse {
+        // Get refresh token from cookie
+        $refreshToken = $request->cookies->get('app_refresh');
+        if ($refreshToken) {
+            $token = $refreshTokenRepository->findValidByToken($refreshToken);
+            if ($token) {
+                $token->setRevoked(true);
+                $entityManger->flush();
+            }
+        }
+
+        $response = new JsonResponse(['status' => true, 'message' => 'Logged out']);
+
+        // Clear both cookies
         $response->headers->setCookie(
             Cookie::create('app_auth')
                 ->withValue('')
@@ -111,6 +150,69 @@ class AuthController extends AbstractController
                 ->withPath('/')
                 ->withExpires(new \DateTime('-1 hour'))
         );
+
+        $response->headers->setCookie(
+            Cookie::create('app_refresh')
+                ->withValue('')
+                ->withHttpOnly(true)
+                ->withSecure(true)
+                ->withSameSite('none')
+                ->withPath('/')
+                ->withExpires(new \DateTime('-1 hour'))
+        );
+
+        return $response;
+    }
+
+    public function refresh(
+        HttpFoundationRequest $request,
+        JWTTokenManagerInterface $jwtManager,
+        RefreshTokenRepository $refreshTokenRepository,
+        EntityManagerInterface $entityManger
+    ): JsonResponse {
+        $refreshTokenString = $request->cookies->get('app_refresh');
+
+        if (!$refreshTokenString) {
+            return $this->json([
+                'status' => false,
+                'message' => 'Refresh token not found',
+            ], 401);
+        }
+
+        $refreshToken = $refreshTokenRepository->findValidByToken($refreshTokenString);
+
+        if (!$refreshToken) {
+            return $this->json([
+                'status' => false,
+                'message' => 'Invalid or expired refresh token',
+            ], 401);
+        }
+
+        $user = $refreshToken->getUser();
+
+        // Generate new access token
+        $newAccessToken = $jwtManager->create($user);
+
+        // Update refresh token expiry to extend session
+        $refreshToken->setExpiresAt(new \DateTime('+7 days'));
+        $entityManger->flush();
+
+        // New access token cookie
+        $accessCookie = Cookie::create('app_auth')
+            ->withValue($newAccessToken)
+            ->withHttpOnly(true)
+            ->withSecure(true)
+            ->withSameSite('none')
+            ->withPath('/')
+            ->withExpires(new \DateTime('+1 hour'));
+
+        $response = $this->json([
+            'status' => true,
+            'message' => 'Token refreshed',
+        ]);
+
+        $response->headers->setCookie($accessCookie);
+        $response->headers->set('Authorization', 'Bearer ' . $newAccessToken);
 
         return $response;
     }
