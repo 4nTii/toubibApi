@@ -100,6 +100,7 @@ class AppointmentsHelper
     /**
      * Génère les créneaux disponibles pour une seule date.
      * Retourne [] si le médecin n'est pas associé au cabinet, le jour est fermé, ou la config est manquante.
+     * Filtre les créneaux passés et applique un délai de 3h minimum pour les réservations du jour même.
      *
      * @param \DateTimeImmutable $dateObj
      * @return array [['start' => 'H:i', 'end' => 'H:i'], ...]
@@ -152,6 +153,11 @@ class AppointmentsHelper
             ];
         }
 
+        // Calculer le temps minimum pour les réservations
+        $now = new \DateTimeImmutable('now');
+        $isToday = $dateObj->format('Y-m-d') === $now->format('Y-m-d');
+        $minSlotTime = $isToday ? $now->modify('+3 hours') : null;
+
         $slots = [];
         while ($start < $end) {
             $slotEnd = $start->modify("+{$duration} minutes");
@@ -161,6 +167,12 @@ class AppointmentsHelper
             }
 
             if ($excludeLunch && $start < $breakEnd && $slotEnd > $breakStart) {
+                $start = $slotEnd;
+                continue;
+            }
+
+            // Filtrer les créneaux passés ou trop proches (moins de 3h)
+            if ($minSlotTime && $start < $minSlotTime) {
                 $start = $slotEnd;
                 continue;
             }

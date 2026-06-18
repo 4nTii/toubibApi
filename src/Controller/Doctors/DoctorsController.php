@@ -76,7 +76,7 @@ class DoctorsController extends AbstractController
 
         $slugify = fn(string $s): string => strtolower(preg_replace('/\s+/', '-', trim($s)));
         $expected = $slugify($doctor->getUser()->getFirstName()) . '_' . $slugify($doctor->getUser()->getLastName());
-        if ($slug !== $expected) {
+        if (strtolower($slug) !== $expected) {
             return $this->json(['status' => false, 'message' => 'Médecin introuvable'], 404);
         }
 

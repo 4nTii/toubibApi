@@ -94,6 +94,7 @@ class ProfileController extends AbstractController
 
             return [
                 'id'                  => $appt->getId(),
+                'doctorId'            => $doctor->getId(),
                 'doctorFirstName'     => $doctorUser->getFirstName(),
                 'doctorLastName'      => $doctorUser->getLastName(),
                 'doctorSpeciality'    => $doctor->getSpeciality()?->getName(),
