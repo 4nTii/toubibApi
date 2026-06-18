@@ -27,6 +27,7 @@ class ProfileController extends AbstractController
         $userData = $this->json($user, 200, [], ['groups' => ['user:read']])->getContent();
         $userData = json_decode($userData, true);
 
+        $ftpTarget = $this->getParameter('vite_ftp_target');
         $mainDoctor = $user->getMainDoctor();
         $userData['mainDoctor'] = null;
         if ($mainDoctor) {
@@ -36,7 +37,7 @@ class ProfileController extends AbstractController
                 'firstName'  => $doctorUser->getFirstName(),
                 'lastName'   => $doctorUser->getLastName(),
                 'speciality' => $mainDoctor->getSpeciality()?->getName(),
-                'photo'      => $mainDoctor->getProfilePicture(),
+                'photo'      => $ftpTarget . ltrim($mainDoctor->getProfilePicture(), '/'),
             ];
         }
 
@@ -76,6 +77,7 @@ class ProfileController extends AbstractController
             ->getQuery()
             ->getResult();
 
+        $ftpTarget = $this->getParameter('vite_ftp_target');
         $formatter = new \IntlDateFormatter(
             'fr_FR',
             \IntlDateFormatter::FULL,
@@ -85,7 +87,7 @@ class ProfileController extends AbstractController
             'EEEE d MMMM yyyy'
         );
 
-        $data = array_map(function (Appointments $appt) use ($formatter) {
+        $data = array_map(function (Appointments $appt) use ($formatter, $ftpTarget) {
             $doctor = $appt->getDoctor();
             $doctorUser = $doctor->getUser();
             $bs = $appt->getBusinessSite();
@@ -95,7 +97,7 @@ class ProfileController extends AbstractController
                 'doctorFirstName'     => $doctorUser->getFirstName(),
                 'doctorLastName'      => $doctorUser->getLastName(),
                 'doctorSpeciality'    => $doctor->getSpeciality()?->getName(),
-                'doctorAvatar'        => $doctor->getProfilePicture(),
+                'doctorAvatar'        => $ftpTarget . ltrim($doctor->getProfilePicture(), '/'),
                 'doctorEmail'         => $doctorUser->getEmail(),
                 'doctorPhone'         => $doctorUser->getPhone(),
                 'businessSiteName'    => $bs->getName(),

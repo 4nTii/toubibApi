@@ -23,6 +23,7 @@ parameters:
     ftp_user: "%env(FTP_USER)%"
     ftp_pass: "%env(FTP_PASS)%"
     ftp_base_dir: "%env(FTP_BASE_DIR)%"
+    vite_ftp_target: "%env(VITE_FTP_TARGET)%"
 
 services:
     # default configuration for services in *this* file

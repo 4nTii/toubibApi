@@ -253,9 +253,10 @@ class BusinessSitesController extends AbstractController
             return $this->json(['status' => false, 'message' => 'Cabinet non trouvé.'], 404);
         }
 
+        $ftpTarget = $this->getParameter('vite_ftp_target');
         $doctorBusinessSites = $doctorBusinessSiteRepository->findByBusinessSite($businessSite);
 
-        $doctors = array_map(function ($dbs) {
+        $doctors = array_map(function ($dbs) use ($ftpTarget) {
             $doctor = $dbs->getDoctor();
             $user = $doctor->getUser();
 
@@ -264,7 +265,7 @@ class BusinessSitesController extends AbstractController
                 'doctorId' => $doctor->getId(),
                 'firstName' => $user->getFirstName(),
                 'lastName' => $user->getLastName(),
-                'profilePicture' => $doctor->getProfilePicture(),
+                'profilePicture' => $ftpTarget . ltrim($doctor->getProfilePicture(), '/'),
                 'biography' => $doctor->getBiography(),
                 'speciality' => $doctor->getSpeciality()->getName(),
                 'workingSchedule' => $dbs->getWorkingSchedule(),

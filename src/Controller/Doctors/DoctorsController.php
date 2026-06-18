@@ -18,12 +18,19 @@ class DoctorsController extends AbstractController
         Request $request,
         DoctorsRepository $doctorsRepository
     ): JsonResponse {
-        $page    = $request->query->getInt('page', 1);
-        $limit   = $request->query->getInt('limit', 5);
-        $doctors = $doctorsRepository->getAllDoctors($page, $limit);
+        $page      = $request->query->getInt('page', 1);
+        $limit     = $request->query->getInt('limit', 5);
+        $ftpTarget = $this->getParameter('vite_ftp_target');
+        $doctors   = $doctorsRepository->getAllDoctors($page, $limit);
 
         if (empty($doctors)) {
             return $this->json(['status' => false, 'message' => 'Aucun resultat trouvé'], 200);
+        }
+
+        foreach ($doctors as $doctor) {
+            if ($doctor->getProfilePicture()) {
+                $doctor->setProfilePicture($ftpTarget . ltrim($doctor->getProfilePicture(), '/'));
+            }
         }
 
         return $this->json([
@@ -47,6 +54,11 @@ class DoctorsController extends AbstractController
             return $this->json(['status' => false, 'message' => 'Cet utilisateur ne correspond pas à un médecin'], 200);
         }
 
+        $ftpTarget = $this->getParameter('vite_ftp_target');
+        if ($doctor->getProfilePicture()) {
+            $doctor->setProfilePicture($ftpTarget . ltrim($doctor->getProfilePicture(), '/'));
+        }
+
         return $this->json(['status' => true, 'data' => ['doctor' => $doctor]], 200, [], ['groups' => ['doctor:read']]);
     }
 
@@ -59,6 +71,11 @@ class DoctorsController extends AbstractController
         $doctor = $doctorsRepository->find($id);
         if (!$doctor) {
             return $this->json(['status' => false, 'message' => 'Cet utilisateur ne correspond pas à un médecin'], 404);
+        }
+
+        $ftpTarget = $this->getParameter('vite_ftp_target');
+        if ($doctor->getProfilePicture()) {
+            $doctor->setProfilePicture($ftpTarget . ltrim($doctor->getProfilePicture(), '/'));
         }
 
         $response = ['doctor' => $doctor, 'availableSlots' => []];

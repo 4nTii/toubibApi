@@ -20,6 +20,7 @@ class SearchRequestsController extends AbstractController
         BusinessSitesRepository $businessSitesRepository,
         SpecialitiesRepository $specialitiesRepository
     ): JsonResponse {
+        $ftpTarget = $this->getParameter('vite_ftp_target');
         $value = strtolower($request->query->get('value', ''));
 
         if (strlen($value) < 2) {
@@ -52,7 +53,7 @@ class SearchRequestsController extends AbstractController
                 'name' => $user->getFullName(),
                 'gender' => $user->getGender(),
                 'speciality' => $doctor->getSpeciality()?->getName(),
-                'image' => $doctor->getProfilePicture(),
+                'image' => $ftpTarget . ltrim($doctor->getProfilePicture(), '/'),
                 'cities' => array_values($cities)
             ];
         }
@@ -88,7 +89,7 @@ class SearchRequestsController extends AbstractController
                         'name' => $user->getFullName(),
                         'gender' => $user->getGender(),
                         'speciality' => $doctor->getSpeciality()?->getName(),
-                        'image' => $doctor->getProfilePicture(),
+                        'image' => $ftpTarget . ltrim($doctor->getProfilePicture(), '/'),
                         'cities' => array_values($cities)
                     ];
                 }
@@ -106,6 +107,7 @@ class SearchRequestsController extends AbstractController
         Request $request,
         DoctorsRepository $doctorsRepository
     ): JsonResponse {
+        $ftpTarget = $this->getParameter('vite_ftp_target');
         $searchValue = trim($request->query->get('searchValue', ''));
         $location    = trim($request->query->get('location', ''));
         $page        = max(1, (int) $request->query->get('page', 1));
@@ -147,7 +149,7 @@ class SearchRequestsController extends AbstractController
                 'fullName'                => $user->getFullName(),
                 'gender'                  => $user->getGender(),
                 'speciality'              => $doctor->getSpeciality()?->getName(),
-                'profilePicture'          => $doctor->getProfilePicture(),
+                'profilePicture'          => $ftpTarget . ltrim($doctor->getProfilePicture(), '/'),
                 'acceptNewPatients'       => $doctor->isAcceptNewPatients(),
                 'teleconsultationEnabled' => $doctor->isTeleconsultationEnabled(),
                 'verified'                => $doctor->isVerified(),
