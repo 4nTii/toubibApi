@@ -52,7 +52,7 @@ all: ## Run everything: build -> up -> setup (migrate + jwt + cache)
 	@echo "-----------------------------------------------------"
 	@echo "  Toubib is ready"
 	@echo ""
-	@echo "  API       -> http://localhost:8000"
+	@echo "  API       -> https://localhost:8000"
 	@echo "  Mails     -> http://localhost:8025"
 	@echo "  phpMyAdmin-> http://localhost:8081"
 	@echo ""
