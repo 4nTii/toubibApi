@@ -2,6 +2,7 @@
 
 namespace App\Controller\Auth;
 
+use App\Controller\Auth\DTO\LoginRequest;
 use App\Entity\LoggingAttempt;
 use App\Entity\RefreshToken;
 use App\Entity\Users;
@@ -33,30 +34,32 @@ class AuthController extends AbstractController
         EntityManagerInterface $entityManger,
         LoggingAttemptRepository $loggingAttemptRepository,
         LoggingSecurityService $loggingSecurity,
-        RefreshTokenRepository $refreshTokenRepository
+        RefreshTokenRepository $refreshTokenRepository,
+        ValidatorInterface $validator
     ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
+        $data = json_decode($request->getContent(), true) ?? [];
         $userAgent = $request->headers->get('User-Agent');
         $userIp = $request->getClientIp();
-        $origin = $request->headers->get('origin');
 
-        if (!isset($data['username'], $data['password'])) {
+        $loginRequest = LoginRequest::fromArray($data);
+        $errors = $validator->validate($loginRequest);
+        if (count($errors) > 0) {
             $loggingAttemptRepository->add(new LoggingAttempt(null, $userIp, $userAgent), true);
             return $this->json([
                 'status'  => false,
-                'message' => 'Nom d\'utilisateur et mot de passe requis',
+                'message' => $errors[0]->getMessage(),
             ], 400);
         }
 
-        if (!$loggingSecurity->verifyLoggingAbility($userIp, $data['username'])) {
+        if (!$loggingSecurity->verifyLoggingAbility($userIp, $loginRequest->username)) {
             return $this->json([
                 'status'  => false,
                 'message' => 'Trop de tentatives de connexion, veuillez réessayer plus tard',
             ], 429);
         }
 
-        $user = $usersRepository->findByEmail($data['username']);
-        if (!$user || !$userPasswordHasher->isPasswordValid($user, $data['password'])) {
+        $user = $usersRepository->findByEmail($loginRequest->username);
+        if (!$user || !$userPasswordHasher->isPasswordValid($user, $loginRequest->password)) {
             $loggingAttemptRepository->add(new LoggingAttempt($user?->getEmail(), $userIp, $userAgent), true);
             return $this->json([
                 'status'  => false,
@@ -71,13 +74,12 @@ class AuthController extends AbstractController
             ], 403);
         }
 
-        // Revoke all existing refresh tokens
         $refreshTokenRepository->revokeAllByUser($user);
 
-        // Generate access token (1 hour)
+        // access token
         $accessToken = $jwtManager->create($user);
 
-        // Generate refresh token (7 days)
+        // refresh token 
         $refreshTokenString = bin2hex(random_bytes(32));
         $refreshToken = new RefreshToken();
         $refreshToken->setUser($user);
@@ -85,14 +87,13 @@ class AuthController extends AbstractController
         $refreshToken->setExpiresAt(new \DateTime('+7 days'));
         $entityManger->persist($refreshToken);
 
-        // Update user + cleanup logs
         $user->setLastLogin(new \DateTime());
         $entityManger->flush();
 
         $loggingAttemptRepository->deleteByEmail($user->getEmail());
         $loggingAttemptRepository->deleteByIpAddress($userIp);
 
-        // Access token cookie (HttpOnly)
+        // token cookie
         $accessCookie = Cookie::create('app_auth')
             ->withValue($accessToken)
             ->withHttpOnly(true)
@@ -101,7 +102,6 @@ class AuthController extends AbstractController
             ->withPath('/')
             ->withExpires(new \DateTime('+1 hour'));
 
-        // Refresh token cookie (HttpOnly)
         $refreshCookie = Cookie::create('app_refresh')
             ->withValue($refreshTokenString)
             ->withHttpOnly(true)
@@ -110,7 +110,6 @@ class AuthController extends AbstractController
             ->withPath('/')
             ->withExpires(new \DateTime('+7 days'));
 
-        // Response with both cookies
         $response = $this->json([
             'status' => true,
             'email'  => $user->getEmail(),
@@ -128,7 +127,6 @@ class AuthController extends AbstractController
         RefreshTokenRepository $refreshTokenRepository,
         EntityManagerInterface $entityManger
     ): JsonResponse {
-        // Get refresh token from cookie
         $refreshToken = $request->cookies->get('app_refresh');
         if ($refreshToken) {
             $token = $refreshTokenRepository->findValidByToken($refreshToken);
@@ -190,10 +188,8 @@ class AuthController extends AbstractController
 
         $user = $refreshToken->getUser();
 
-        // Generate new access token
         $newAccessToken = $jwtManager->create($user);
 
-        // Update refresh token expiry to extend session
         $refreshToken->setExpiresAt(new \DateTime('+7 days'));
         $entityManger->flush();
 
