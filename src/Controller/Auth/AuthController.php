@@ -113,7 +113,7 @@ class AuthController extends AbstractController
         $response = $this->json([
             'status' => true,
             'email'  => $user->getEmail(),
-        ]);
+        ], 200);
 
         $response->headers->setCookie($accessCookie);
         $response->headers->setCookie($refreshCookie);
