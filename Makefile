@@ -54,7 +54,6 @@ all: ## Run everything: build -> up -> setup (migrate + jwt + cache)
 	@echo ""
 	@echo "  API       -> https://localhost:8000"
 	@echo "  Mails     -> http://localhost:8025"
-	@echo "  phpMyAdmin-> http://localhost:8081"
 	@echo ""
 	@echo "  Run 'make help' to see all available commands"
 	@echo "-----------------------------------------------------"
@@ -80,7 +79,6 @@ up: ## Start containers (dev)
 	docker compose exec nginx nginx -s reload 2>/dev/null || true
 	@echo "App       : https://localhost:8000"
 	@echo "Mails     : http://localhost:8025"
-	@echo "phpMyAdmin: http://localhost:8081"
 
 down: ## Stop and remove containers
 	docker compose down

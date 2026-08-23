@@ -57,20 +57,3 @@ services:
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
     networks:
       - toubib_network
-
-  # -----------------------------------------
-  # phpMyAdmin (dev only)
-  # -----------------------------------------
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: toubib_phpmyadmin
-    ports:
-      - "8081:80"
-    environment:
-      PMA_HOST: db
-      PMA_USER: ${DB_USER:-toubib_user}
-      PMA_PASSWORD: ${DB_PASSWORD:-toubib_password}
-    depends_on:
-      - db
-    networks:
-      - toubib_network
