@@ -13,6 +13,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Ignore as Ignore;
 use Symfony\Component\Serializer\Attribute\Groups as Groups;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use DateTimeInterface;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'users')]
@@ -81,15 +82,15 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'date', nullable: true)]
     #[Groups(['user:read'])]
-    private ?\DateTimeInterface $birthDay = null;
+    private ?DateTimeInterface $birthDay = null;
 
     #[ORM\Column(type: 'datetime')]
     #[Groups(['user:read'])]
-    private \DateTimeInterface $dateInscription;
+    private DateTimeInterface $dateInscription;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
     #[Groups(['user:read'])]
-    private ?\DateTimeInterface $lastLogin = null;
+    private ?DateTimeInterface $lastLogin = null;
 
     #[ORM\Column(type: 'string', length: 20)]
     #[Groups(['user:read', 'doctor:read'])]
@@ -139,7 +140,7 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         $this->sentMessages = new ArrayCollection();
         $this->receivedMessages = new ArrayCollection();
         $this->passwordResetTokens = new ArrayCollection();
-        $this->dateInscription = new \DateTime();
+        $this->dateInscription = new DateTime();
 
         $this->role = 'ROLE_USER';
         $this->userToken = bin2hex(random_bytes(32));
@@ -245,31 +246,31 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getBirthDay(): ?\DateTimeInterface
+    public function getBirthDay(): ?DateTimeInterface
     {
         return $this->birthDay;
     }
-    public function setBirthDay(\DateTimeInterface $birthDay): self
+    public function setBirthDay(DateTimeInterface $birthDay): self
     {
         $this->birthDay = $birthDay;
         return $this;
     }
 
-    public function getDateInscription(): \DateTimeInterface
+    public function getDateInscription(): DateTimeInterface
     {
         return $this->dateInscription;
     }
-    public function setDateInscription(\DateTimeInterface $dateInscription): self
+    public function setDateInscription(DateTimeInterface $dateInscription): self
     {
         $this->dateInscription = $dateInscription;
         return $this;
     }
 
-    public function getLastLogin(): ?\DateTimeInterface
+    public function getLastLogin(): ?DateTimeInterface
     {
         return $this->lastLogin;
     }
-    public function setLastLogin(?\DateTimeInterface $lastLogin): self
+    public function setLastLogin(?DateTimeInterface $lastLogin): self
     {
         $this->lastLogin = $lastLogin;
         return $this;

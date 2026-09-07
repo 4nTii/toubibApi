@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\RefreshTokenRepository;
+use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: RefreshTokenRepository::class)]
@@ -22,17 +24,17 @@ class RefreshToken
     private ?string $token = null;
 
     #[ORM\Column(type: 'datetime')]
-    private ?\DateTimeInterface $expiresAt = null;
+    private ?DateTimeInterface $expiresAt = null;
 
     #[ORM\Column(type: 'datetime')]
-    private ?\DateTimeInterface $createdAt = null;
+    private ?DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: 'boolean')]
     private bool $revoked = false;
 
     public function __construct()
     {
-        $this->createdAt = new \DateTime();
+        $this->createdAt = new DateTime();
     }
 
     public function getId(): ?int
@@ -62,23 +64,23 @@ class RefreshToken
         return $this;
     }
 
-    public function getExpiresAt(): ?\DateTimeInterface
+    public function getExpiresAt(): ?DateTimeInterface
     {
         return $this->expiresAt;
     }
 
-    public function setExpiresAt(\DateTimeInterface $expiresAt): static
+    public function setExpiresAt(DateTimeInterface $expiresAt): static
     {
         $this->expiresAt = $expiresAt;
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreatedAt(DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
         return $this;
@@ -97,6 +99,6 @@ class RefreshToken
 
     public function isExpired(): bool
     {
-        return $this->expiresAt < new \DateTime();
+        return $this->expiresAt < new DateTime();
     }
 }

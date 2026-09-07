@@ -8,6 +8,9 @@ use App\Entity\Users;
 use App\Entity\BusinessSites;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use DateTime;
+use DateTimeImmutable;
+use DateTimeInterface;
 
 /**
  * @extends ServiceEntityRepository<Appointments>
@@ -73,7 +76,7 @@ class AppointmentsRepository extends ServiceEntityRepository
             ->andWhere('a.patient = :user')
             ->andWhere('a.startTime > :now')
             ->setParameter('user', $user)
-            ->setParameter('now', new \DateTime())
+            ->setParameter('now', new DateTime())
             ->orderBy('a.startTime', 'ASC')
             ->getQuery()
             ->getResult();
@@ -85,7 +88,7 @@ class AppointmentsRepository extends ServiceEntityRepository
             ->andWhere('a.doctor = :doctor')
             ->andWhere('a.startTime > :now')
             ->setParameter('doctor', $doctor)
-            ->setParameter('now', new \DateTime())
+            ->setParameter('now', new DateTime())
             ->orderBy('a.startTime', 'ASC')
             ->getQuery()
             ->getResult();
@@ -100,7 +103,7 @@ class AppointmentsRepository extends ServiceEntityRepository
             ->andWhere('a.patient = :user')
             ->andWhere('a.endTime < :now')
             ->setParameter('user', $user)
-            ->setParameter('now', new \DateTime())
+            ->setParameter('now', new DateTime())
             ->orderBy('a.startTime', 'DESC')
             ->getQuery()
             ->getResult();
@@ -112,7 +115,7 @@ class AppointmentsRepository extends ServiceEntityRepository
             ->andWhere('a.doctor = :doctor')
             ->andWhere('a.endTime < :now')
             ->setParameter('doctor', $doctor)
-            ->setParameter('now', new \DateTime())
+            ->setParameter('now', new DateTime())
             ->orderBy('a.startTime', 'DESC')
             ->getQuery()
             ->getResult();
@@ -183,11 +186,11 @@ class AppointmentsRepository extends ServiceEntityRepository
     public function getScheduleByDate(
         Doctors $doctor,
         BusinessSites $businessSite,
-        \DateTimeInterface $date,
+        DateTimeInterface $date,
         bool $excludeLunch = true
     ): array {
 
-        $date = \DateTimeImmutable::createFromInterface($date);
+        $date = DateTimeImmutable::createFromInterface($date);
 
         $dayStart = $date->setTime(0, 0, 0);
         $dayEnd   = $date->setTime(23, 59, 59);

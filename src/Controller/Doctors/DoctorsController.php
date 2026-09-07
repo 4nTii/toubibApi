@@ -11,6 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use DateTimeImmutable;
 
 class DoctorsController extends AbstractController
 {
@@ -91,7 +92,7 @@ class DoctorsController extends AbstractController
             $primaryBusinessSite = $businessSitesRepository->getPrimaryBusinessSite($doctor);
 
             if ($primaryBusinessSite) {
-                $dateStart = new \DateTimeImmutable('now');
+                $dateStart = new DateTimeImmutable('now');
                 $dateEnd   = $dateStart->modify('+6 days');
 
                 $response['availableSlots'] = $appointmentsHelper->getSlotsByDates(

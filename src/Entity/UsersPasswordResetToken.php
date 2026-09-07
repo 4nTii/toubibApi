@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\UsersPasswordResetTokenRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: UsersPasswordResetTokenRepository::class)]
@@ -17,7 +18,7 @@ class UsersPasswordResetToken
     private ?string $token = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(targetEntity: Users::class, inversedBy: 'passwordResetTokens')]
     #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
@@ -26,7 +27,7 @@ class UsersPasswordResetToken
     public function __construct(Users $user)
     {
         $this->token = bin2hex(random_bytes(32));
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
         $this->user = $user;
     }
 
@@ -40,7 +41,7 @@ class UsersPasswordResetToken
         return $this->token;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }

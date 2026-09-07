@@ -6,6 +6,7 @@ use App\Entity\UnavailabilitySlots;
 use App\Entity\Doctors;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use DateTimeInterface;
 
 /**
  * @extends ServiceEntityRepository<UnavailabilitySlots>
@@ -49,7 +50,7 @@ class UnavailabilitySlotsRepository extends ServiceEntityRepository
     /**
      * Récupère les créneaux d'indisponibilité d'un médecin à partir d'une date donnée
      */
-    public function findFutureByDoctor(Doctors $doctor, \DateTimeInterface $fromDate): array
+    public function findFutureByDoctor(Doctors $doctor, DateTimeInterface $fromDate): array
     {
         return $this->createQueryBuilder('u')
             ->andWhere('u.doctor = :doctor')
@@ -64,7 +65,7 @@ class UnavailabilitySlotsRepository extends ServiceEntityRepository
     /**
      * Vérifie si un médecin est indisponible à un créneau donné
      */
-    public function isDoctorUnavailable(Doctors $doctor, \DateTimeInterface $startTime, \DateTimeInterface $endTime): bool
+    public function isDoctorUnavailable(Doctors $doctor, DateTimeInterface $startTime, DateTimeInterface $endTime): bool
     {
         $qb = $this->createQueryBuilder('u')
             ->select('COUNT(u.id)')

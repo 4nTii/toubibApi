@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use DateTime;
 
 class AdminController extends AbstractController
 {
@@ -130,7 +131,7 @@ class AdminController extends AbstractController
             $doctor->setUser($target);
             $doctor->setSpeciality($speciality);
             $doctor->setLicenseNumber('ADM-' . $target->getId() . '-' . time());
-            $doctor->setActivityStarted(new \DateTime());
+            $doctor->setActivityStarted(new DateTime());
             $doctor->setIsActive(true);
 
             if ($target->getRole() === 'ROLE_USER') {

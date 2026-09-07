@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\AppConfigRepository;
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AppConfigRepository::class)]
@@ -27,7 +28,7 @@ class AppConfig
     private ?bool $maintenance = false;
 
     #[ORM\Column]
-    private ?\DateTime $updateAt = null;
+    private ?DateTime $updateAt = null;
 
     public function getId(): ?int
     {
@@ -78,7 +79,7 @@ class AppConfig
         return $this;
     }
 
-    public function getUpdateAt(): ?\DateTime
+    public function getUpdateAt(): ?DateTime
     {
         return $this->updateAt;
     }
@@ -87,6 +88,6 @@ class AppConfig
     #[ORM\PreUpdate]
     public function updateTimestamp(): void
     {
-        $this->updateAt = new \DateTime();
+        $this->updateAt = new DateTime();
     }
 }

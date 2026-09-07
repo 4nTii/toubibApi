@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Users;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Entity\Doctors;
 
 /**
  * @extends ServiceEntityRepository<Users>
@@ -79,7 +80,7 @@ class UsersRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function findByMainDoctorPaginated(\App\Entity\Doctors $doctor, int $page, int $limit): array
+    public function findByMainDoctorPaginated(Doctors $doctor, int $page, int $limit): array
     {
         $offset = ($page - 1) * $limit;
 

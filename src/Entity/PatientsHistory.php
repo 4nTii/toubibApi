@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use DateTime;
+use DateTimeInterface;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'patients_history')]
@@ -27,7 +29,7 @@ class PatientsHistory
 
     #[ORM\Column(type: 'datetime')]
     #[Groups(['patient_history:read'])]
-    private \DateTimeInterface $date;
+    private DateTimeInterface $date;
 
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['patient_history:read'])]
@@ -35,7 +37,7 @@ class PatientsHistory
 
     public function __construct()
     {
-        $this->date = new \DateTime();
+        $this->date = new DateTime();
     }
 
     public function getId(): ?int
@@ -65,12 +67,12 @@ class PatientsHistory
         return $this;
     }
 
-    public function getDate(): \DateTimeInterface
+    public function getDate(): DateTimeInterface
     {
         return $this->date;
     }
 
-    public function setDate(\DateTimeInterface $date): self
+    public function setDate(DateTimeInterface $date): self
     {
         $this->date = $date;
         return $this;

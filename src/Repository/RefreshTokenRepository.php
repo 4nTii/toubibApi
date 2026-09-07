@@ -6,6 +6,7 @@ use App\Entity\RefreshToken;
 use App\Entity\Users;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use DateTime;
 
 class RefreshTokenRepository extends ServiceEntityRepository
 {
@@ -41,7 +42,7 @@ class RefreshTokenRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('rt')
             ->delete()
             ->where('rt.expiresAt < :now')
-            ->setParameter('now', new \DateTime())
+            ->setParameter('now', new DateTime())
             ->getQuery()
             ->execute();
     }

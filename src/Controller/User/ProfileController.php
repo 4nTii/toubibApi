@@ -8,13 +8,20 @@ use App\Repository\UserCardRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Entity\UserCard;
+use App\Entity\Users;
+use App\Service\Auth\AuthValidatorService;
+use DateTime;
+use Exception;
+use IntlDateFormatter;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\HttpFoundation\Request as HttpFoundationRequest;
 
 class ProfileController extends AbstractController
 {
     public function me(UserCardRepository $userCardRepository): JsonResponse
     {
-        /** @var \App\Entity\Users $user */
+        /** @var Users $user */
         $user = $this->getUser();
 
         if (!$user) {
@@ -63,7 +70,7 @@ class ProfileController extends AbstractController
     public function getAppointments(
         AppointmentsRepository $appointmentsRepository
     ): JsonResponse {
-        /** @var \App\Entity\Users $user */
+        /** @var Users $user */
         $user = $this->getUser();
 
         if (!$user) {
@@ -78,10 +85,10 @@ class ProfileController extends AbstractController
             ->getResult();
 
         $ftpTarget = $this->getParameter('vite_ftp_target');
-        $formatter = new \IntlDateFormatter(
+        $formatter = new IntlDateFormatter(
             'fr_FR',
-            \IntlDateFormatter::FULL,
-            \IntlDateFormatter::NONE,
+            IntlDateFormatter::FULL,
+            IntlDateFormatter::NONE,
             null,
             null,
             'EEEE d MMMM yyyy'
@@ -117,7 +124,7 @@ class ProfileController extends AbstractController
 
     public function editProfile(HttpFoundationRequest $request, EntityManagerInterface $entityManager): JsonResponse
     {
-        /** @var \App\Entity\Users $user */
+        /** @var Users $user */
         $user = $this->getUser();
 
         if (!$user) {
@@ -183,8 +190,8 @@ class ProfileController extends AbstractController
 
             if ($field === 'birthDay') {
                 try {
-                    $value = new \DateTime($value);
-                } catch (\Exception $e) {
+                    $value = new DateTime($value);
+                } catch (Exception $e) {
                     return $this->json([
                         'status'  => false,
                         'message' => 'Format de date invalide, utilisez ISO 8601 (ex: 1990-05-21)'
@@ -206,11 +213,11 @@ class ProfileController extends AbstractController
     public function changePassword(
         HttpFoundationRequest $request,
         EntityManagerInterface $entityManager,
-        \Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface $passwordHasher,
-        \App\Service\Auth\AuthValidatorService $authValidator
+        UserPasswordHasherInterface $passwordHasher,
+        AuthValidatorService $authValidator
     ): JsonResponse
     {
-        /** @var \App\Entity\Users $user */
+        /** @var Users $user */
         $user = $this->getUser();
 
         if (!$user) {
@@ -260,10 +267,10 @@ class ProfileController extends AbstractController
     public function addOrUpdateCard(
         HttpFoundationRequest $request,
         EntityManagerInterface $entityManager,
-        \App\Repository\UserCardRepository $userCardRepository
+        UserCardRepository $userCardRepository
     ): JsonResponse
     {
-        /** @var \App\Entity\Users $user */
+        /** @var Users $user */
         $user = $this->getUser();
 
         if (!$user) {
@@ -333,7 +340,7 @@ class ProfileController extends AbstractController
         // Get or create user card
         $userCard = $userCardRepository->findOneBy(['user' => $user]);
         if (!$userCard) {
-            $userCard = new \App\Entity\UserCard();
+            $userCard = new UserCard();
             $userCard->setUser($user);
         }
 

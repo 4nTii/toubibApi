@@ -2,6 +2,9 @@
 
 namespace App\Entity;
 
+use DateTime;
+use DateTimeInterface;
+
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -35,11 +38,11 @@ class Prescriptions
     private ?string $notes = null; // Notes supplémentaires
 
     #[ORM\Column(type: 'datetime')]
-    private \DateTimeInterface $createdAt;
+    private DateTimeInterface $createdAt;
 
     public function __construct()
     {
-        $this->createdAt = new \DateTime();
+        $this->createdAt = new DateTime();
     }
 
     // -------------------- Getters & Setters --------------------
@@ -104,12 +107,12 @@ class Prescriptions
         return $this;
     }
 
-    public function getCreatedAt(): \DateTimeInterface
+    public function getCreatedAt(): DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    public function setCreatedAt(DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
         return $this;

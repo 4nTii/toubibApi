@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\LoggingAttempt;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use DateTimeImmutable;
 
 class LoggingAttemptRepository extends ServiceEntityRepository
 {
@@ -39,7 +40,7 @@ class LoggingAttemptRepository extends ServiceEntityRepository
      */
     public function countRecentAttemptsByEmail(string $email, int $minutes = 5): int
     {
-        $since = new \DateTimeImmutable("-{$minutes} minutes");
+        $since = new DateTimeImmutable("-{$minutes} minutes");
 
         return $this->createQueryBuilder('l')
             ->select('COUNT(l.id)')
@@ -61,7 +62,7 @@ class LoggingAttemptRepository extends ServiceEntityRepository
      */
     public function countRecentAttemptsByIpAddress(string $ipAddress, int $minutes = 30): int
     {
-        $since = new \DateTimeImmutable("-{$minutes} minutes");
+        $since = new DateTimeImmutable("-{$minutes} minutes");
 
         return $this->createQueryBuilder('l')
             ->select('COUNT(l.id)')

@@ -16,6 +16,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use App\Entity\BusinessSites;
+use Exception;
 
 class BusinessSitesController extends AbstractController
 {
@@ -35,7 +37,7 @@ class BusinessSitesController extends AbstractController
                 CreateBusinessSiteDTO::class,
                 'json'
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json([
                 'status' => false,
                 'message' => 'JSON invalide'
@@ -71,7 +73,7 @@ class BusinessSitesController extends AbstractController
         }
 
         // Création
-        $businessSite = new \App\Entity\BusinessSites();
+        $businessSite = new BusinessSites();
         $businessSite->setName($dto->name);
         $businessSite->setAddress($dto->address);
         $businessSite->setVille($dto->ville);
@@ -81,7 +83,7 @@ class BusinessSitesController extends AbstractController
 
         $entityManager->persist($businessSite);
 
-        $dbs = new \App\Entity\DoctorBusinessSite();
+        $dbs = new DoctorBusinessSite();
         $dbs->setDoctor($doctor);
         $dbs->setBusinessSite($businessSite);
         $dbs->setIsOwner(true);

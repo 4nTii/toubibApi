@@ -6,6 +6,7 @@ use App\Entity\UsersPasswordResetToken;
 use App\Entity\Users;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use DateTimeImmutable;
 
 class UsersPasswordResetTokenRepository extends ServiceEntityRepository
 {
@@ -73,7 +74,7 @@ class UsersPasswordResetTokenRepository extends ServiceEntityRepository
     /**
      * Supprime tous les tokens créés avant $date (nettoyage cron).
      */
-    public function deleteExpiredTokens(\DateTimeImmutable $date): int
+    public function deleteExpiredTokens(DateTimeImmutable $date): int
     {
         return $this->createQueryBuilder('t')
             ->delete()
@@ -89,7 +90,7 @@ class UsersPasswordResetTokenRepository extends ServiceEntityRepository
     public function isTokenValid(UsersPasswordResetToken $token): bool
     {
         $expiry = $token->getCreatedAt()->modify('+' . self::TOKEN_LIFETIME_MINUTES . ' minutes');
-        return new \DateTimeImmutable() < $expiry;
+        return new DateTimeImmutable() < $expiry;
     }
 
     /**

@@ -7,6 +7,9 @@ use App\Repository\AppointmentsRepository;
 use App\Entity\Doctors;
 use App\Entity\BusinessSites;
 use App\Entity\DoctorBusinessSite;
+use DateInterval;
+use DatePeriod;
+use DateTimeImmutable;
 
 class AppointmentsHelper
 {
@@ -18,13 +21,13 @@ class AppointmentsHelper
     /**
      * Retourne les créneaux disponibles pour une date, une plage [debut, fin] ou un tableau de dates.
      *
-     * @param \DateTimeImmutable|array $date  DateTimeImmutable | [DateTimeImmutable, DateTimeImmutable] (plage) | [DateTimeImmutable, ...] (liste)
+     * @param DateTimeImmutable|array $date  DateTimeImmutable | [DateTimeImmutable, DateTimeImmutable] (plage) | [DateTimeImmutable, ...] (liste)
      * @return array Slots indexés par date si plusieurs dates, tableau de slots si date unique
      */
     public function getSlotsByDates(
         Doctors $doctor,
         BusinessSites $businessSite,
-        \DateTimeImmutable|array $date,
+        DateTimeImmutable|array $date,
         bool $excludeLunch = true
     ): array {
         $doctorBusinessSite = $this->dbsRepository->findOneBy([
@@ -62,12 +65,12 @@ class AppointmentsHelper
      * - [debut, fin]             → toutes les dates de la plage inclus
      * - [DateTimeImmutable, ...] → tableau tel quel après filtrage
      *
-     * @param \DateTimeImmutable|array $date
-     * @return \DateTimeImmutable[]
+     * @param DateTimeImmutable|array $date
+     * @return DateTimeImmutable[]
      */
-    private function resolveDates(\DateTimeImmutable|array $date): array
+    private function resolveDates(DateTimeImmutable|array $date): array
     {
-        if ($date instanceof \DateTimeImmutable) {
+        if ($date instanceof DateTimeImmutable) {
             return [$date];
         }
 
@@ -78,22 +81,22 @@ class AppointmentsHelper
         // Plage [debut, fin]
         if (
             count($date) === 2 &&
-            $date[0] instanceof \DateTimeImmutable &&
-            $date[1] instanceof \DateTimeImmutable
+            $date[0] instanceof DateTimeImmutable &&
+            $date[1] instanceof DateTimeImmutable
         ) {
-            $interval = new \DateInterval('P1D');
-            $period   = new \DatePeriod($date[0], $interval, $date[1]->modify('+1 day'));
+            $interval = new DateInterval('P1D');
+            $period   = new DatePeriod($date[0], $interval, $date[1]->modify('+1 day'));
 
             $dates = [];
             foreach ($period as $day) {
-                $dates[] = \DateTimeImmutable::createFromInterface($day);
+                $dates[] = DateTimeImmutable::createFromInterface($day);
             }
             return $dates;
         }
 
         // Tableau de dates quelconques
         return array_values(
-            array_filter($date, fn($d) => $d instanceof \DateTimeImmutable)
+            array_filter($date, fn($d) => $d instanceof DateTimeImmutable)
         );
     }
 
@@ -102,12 +105,12 @@ class AppointmentsHelper
      * Retourne [] si le médecin n'est pas associé au cabinet, le jour est fermé, ou la config est manquante.
      * Filtre les créneaux passés et applique un délai de 3h minimum pour les réservations du jour même.
      *
-     * @param \DateTimeImmutable $dateObj
+     * @param DateTimeImmutable $dateObj
      * @return array [['start' => 'H:i', 'end' => 'H:i'], ...]
      */
     private function getSlotsForDate(
         DoctorBusinessSite $doctorBusinessSite,
-        \DateTimeImmutable $dateObj,
+        DateTimeImmutable $dateObj,
         bool $excludeLunch
     ): array {
         $schedule = $doctorBusinessSite->getWorkingSchedule();
@@ -124,8 +127,8 @@ class AppointmentsHelper
         }
 
         $date  = $dateObj->format('Y-m-d');
-        $start = new \DateTimeImmutable($date . ' ' . $schedule[$dayName]['start']);
-        $end   = new \DateTimeImmutable($date . ' ' . $schedule[$dayName]['end']);
+        $start = new DateTimeImmutable($date . ' ' . $schedule[$dayName]['start']);
+        $end   = new DateTimeImmutable($date . ' ' . $schedule[$dayName]['end']);
 
         if ($start >= $end) {
             return [];
@@ -154,7 +157,7 @@ class AppointmentsHelper
         }
 
         // Calculer le temps minimum pour les réservations
-        $now = new \DateTimeImmutable('now');
+        $now = new DateTimeImmutable('now');
         $isToday = $dateObj->format('Y-m-d') === $now->format('Y-m-d');
         $minSlotTime = $isToday ? $now->modify('+3 hours') : null;
 

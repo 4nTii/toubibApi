@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Serializer\Attribute\Groups;
+use DateTimeInterface;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'doctors')]
@@ -27,7 +28,7 @@ class Doctors
 
     #[ORM\Column(name: 'activity_started', type: 'date')]
     #[Groups(['doctor:read'])]
-    private ?\DateTimeInterface $activityStarted = null;
+    private ?DateTimeInterface $activityStarted = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['doctor:read'])]
@@ -117,11 +118,11 @@ class Doctors
         return $this;
     }
 
-    public function getActivityStarted(): ?\DateTimeInterface
+    public function getActivityStarted(): ?DateTimeInterface
     {
         return $this->activityStarted;
     }
-    public function setActivityStarted(?\DateTimeInterface $activityStarted): self
+    public function setActivityStarted(?DateTimeInterface $activityStarted): self
     {
         $this->activityStarted = $activityStarted;
         return $this;

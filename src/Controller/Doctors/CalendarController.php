@@ -9,6 +9,7 @@ use App\Service\Helper\CalendarService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use App\Entity\Users;
 
 class CalendarController extends AbstractController
 {
@@ -19,7 +20,7 @@ class CalendarController extends AbstractController
         DoctorBusinessSiteRepository $doctorBusinessSiteRepository,
         CalendarService $calendarService
     ): JsonResponse {
-        /** @var \App\Entity\Users $user */
+        /** @var Users $user */
         $user = $this->getUser();
 
         $doctor = $doctorsRepository->findOneBy(['user' => $user]);

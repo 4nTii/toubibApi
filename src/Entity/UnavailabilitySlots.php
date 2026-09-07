@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use DateTimeInterface;
+
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -24,10 +26,10 @@ class UnavailabilitySlots
     private ?BusinessSites $businessSite = null;
 
     #[ORM\Column(type: 'datetime')]
-    private \DateTimeInterface $startTime;
+    private DateTimeInterface $startTime;
 
     #[ORM\Column(type: 'datetime')]
-    private \DateTimeInterface $endTime;
+    private DateTimeInterface $endTime;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $reason = null; // optionnel, ex: "Congés", "Formation"
@@ -61,23 +63,23 @@ class UnavailabilitySlots
         return $this;
     }
 
-    public function getStartTime(): \DateTimeInterface
+    public function getStartTime(): DateTimeInterface
     {
         return $this->startTime;
     }
 
-    public function setStartTime(\DateTimeInterface $startTime): self
+    public function setStartTime(DateTimeInterface $startTime): self
     {
         $this->startTime = $startTime;
         return $this;
     }
 
-    public function getEndTime(): \DateTimeInterface
+    public function getEndTime(): DateTimeInterface
     {
         return $this->endTime;
     }
 
-    public function setEndTime(\DateTimeInterface $endTime): self
+    public function setEndTime(DateTimeInterface $endTime): self
     {
         $this->endTime = $endTime;
         return $this;

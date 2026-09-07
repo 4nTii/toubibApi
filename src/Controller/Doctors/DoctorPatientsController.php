@@ -16,6 +16,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use DateTime;
+use Exception;
 
 class DoctorPatientsController extends AbstractController
 {
@@ -67,8 +69,8 @@ class DoctorPatientsController extends AbstractController
 
         if (!empty($data['birthDay'])) {
             try {
-                $user->setBirthDay(new \DateTime($data['birthDay']));
-            } catch (\Exception) {}
+                $user->setBirthDay(new DateTime($data['birthDay']));
+            } catch (Exception) {}
         }
 
         $em->persist($user);
@@ -224,8 +226,8 @@ class DoctorPatientsController extends AbstractController
 
             if ($field === 'birthDay' && is_string($value) && $value !== '') {
                 try {
-                    $value = new \DateTime($value);
-                } catch (\Exception) {
+                    $value = new DateTime($value);
+                } catch (Exception) {
                     return $this->json(['status' => false, 'message' => 'Format de date invalide (ex: 1990-05-21)'], 400);
                 }
             }

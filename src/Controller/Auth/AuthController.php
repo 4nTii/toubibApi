@@ -84,10 +84,10 @@ class AuthController extends AbstractController
         $refreshToken = new RefreshToken();
         $refreshToken->setUser($user);
         $refreshToken->setToken($refreshTokenString);
-        $refreshToken->setExpiresAt(new \DateTime('+7 days'));
+        $refreshToken->setExpiresAt(new DateTime('+7 days'));
         $entityManger->persist($refreshToken);
 
-        $user->setLastLogin(new \DateTime());
+        $user->setLastLogin(new DateTime());
         $entityManger->flush();
 
         $loggingAttemptRepository->deleteByEmail($user->getEmail());
@@ -100,7 +100,7 @@ class AuthController extends AbstractController
             ->withSecure(true)
             ->withSameSite('none')
             ->withPath('/')
-            ->withExpires(new \DateTime('+1 hour'));
+            ->withExpires(new DateTime('+1 hour'));
 
         $refreshCookie = Cookie::create('app_refresh')
             ->withValue($refreshTokenString)
@@ -108,7 +108,7 @@ class AuthController extends AbstractController
             ->withSecure(true)
             ->withSameSite('none')
             ->withPath('/')
-            ->withExpires(new \DateTime('+7 days'));
+            ->withExpires(new DateTime('+7 days'));
 
         $response = $this->json([
             'status' => true,
@@ -146,7 +146,7 @@ class AuthController extends AbstractController
                 ->withSecure(true)
                 ->withSameSite('none')
                 ->withPath('/')
-                ->withExpires(new \DateTime('-1 hour'))
+                ->withExpires(new DateTime('-1 hour'))
         );
 
         $response->headers->setCookie(
@@ -156,7 +156,7 @@ class AuthController extends AbstractController
                 ->withSecure(true)
                 ->withSameSite('none')
                 ->withPath('/')
-                ->withExpires(new \DateTime('-1 hour'))
+                ->withExpires(new DateTime('-1 hour'))
         );
 
         return $response;
@@ -190,7 +190,7 @@ class AuthController extends AbstractController
 
         $newAccessToken = $jwtManager->create($user);
 
-        $refreshToken->setExpiresAt(new \DateTime('+7 days'));
+        $refreshToken->setExpiresAt(new DateTime('+7 days'));
         $entityManger->flush();
 
         // New access token cookie
@@ -200,7 +200,7 @@ class AuthController extends AbstractController
             ->withSecure(true)
             ->withSameSite('none')
             ->withPath('/')
-            ->withExpires(new \DateTime('+1 hour'));
+            ->withExpires(new DateTime('+1 hour'));
 
         $response = $this->json([
             'status' => true,
@@ -238,7 +238,7 @@ class AuthController extends AbstractController
         $user->setPassword($data['password']);
         $user->setPhone($data['phone']);
         $user->setBiography('New user');
-        $user->setBirthDay(new \DateTime($data['birthDay']));
+        $user->setBirthDay(new DateTime($data['birthDay']));
         $user->setLastLogin(null);
         $user->setRole('ROLE_USER');
 

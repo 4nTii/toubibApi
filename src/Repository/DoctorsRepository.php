@@ -7,6 +7,7 @@ use App\Entity\Specialities;
 use App\Entity\BusinessSites;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use DateTimeInterface;
 
 /**
  * @extends ServiceEntityRepository<Doctors>
@@ -202,7 +203,7 @@ class DoctorsRepository extends ServiceEntityRepository
     /**
      * Récupère les médecins actifs disponibles à partir d'une date donnée
      */
-    public function findAvailableDoctors(\DateTimeInterface $fromDate): array
+    public function findAvailableDoctors(DateTimeInterface $fromDate): array
     {
         return $this->createQueryBuilder('d')
             ->andWhere('d.isActive = :active')

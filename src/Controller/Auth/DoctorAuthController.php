@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use DateTime;
 
 class DoctorAuthController extends AbstractController
 {
@@ -66,10 +67,10 @@ class DoctorAuthController extends AbstractController
         $refreshToken = new RefreshToken();
         $refreshToken->setUser($user);
         $refreshToken->setToken($refreshTokenString);
-        $refreshToken->setExpiresAt(new \DateTime('+7 days'));
+        $refreshToken->setExpiresAt(new DateTime('+7 days'));
         $entityManger->persist($refreshToken);
 
-        $user->setLastLogin(new \DateTime());
+        $user->setLastLogin(new DateTime());
         $entityManger->flush();
 
         $loggingAttemptRepository->deleteByEmail($user->getEmail());
@@ -82,7 +83,7 @@ class DoctorAuthController extends AbstractController
             ->withSecure(true)
             ->withSameSite('none')
             ->withPath('/')
-            ->withExpires(new \DateTime('+1 hour'));
+            ->withExpires(new DateTime('+1 hour'));
 
         // Refresh token cookie (HttpOnly)
         $refreshCookie = Cookie::create('app_refresh')
@@ -91,7 +92,7 @@ class DoctorAuthController extends AbstractController
             ->withSecure(true)
             ->withSameSite('none')
             ->withPath('/')
-            ->withExpires(new \DateTime('+7 days'));
+            ->withExpires(new DateTime('+7 days'));
 
         $response = $this->json(['status' => true, 'email' => $user->getEmail()]);
         $response->headers->setCookie($accessCookie);

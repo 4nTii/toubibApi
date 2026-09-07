@@ -12,6 +12,10 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use App\Entity\Users;
+use DateTime;
+use DateTimeImmutable;
+use Exception;
 
 class AppointmentController extends AbstractController
 {
@@ -19,7 +23,7 @@ class AppointmentController extends AbstractController
         AppointmentsRepository $appointmentsRepository,
         DoctorsRepository $doctorsRepository
     ): JsonResponse {
-        /** @var \App\Entity\Users $user */
+        /** @var Users $user */
         $user   = $this->getUser();
         $doctor = $doctorsRepository->findOneBy(['user' => $user]);
 
@@ -71,7 +75,7 @@ class AppointmentController extends AbstractController
         DoctorsRepository $doctorsRepository,
         EntityManagerInterface $em
     ): JsonResponse {
-        /** @var \App\Entity\Users $user */
+        /** @var Users $user */
         $user   = $this->getUser();
         $doctor = $doctorsRepository->findOneBy(['user' => $user]);
 
@@ -110,7 +114,7 @@ class AppointmentController extends AbstractController
         BusinessSitesRepository $businessSitesRepository,
         EntityManagerInterface $em
     ): JsonResponse {
-        /** @var \App\Entity\Users $user */
+        /** @var Users $user */
         $user   = $this->getUser();
         $doctor = $doctorsRepository->findOneBy(['user' => $user]);
 
@@ -135,14 +139,14 @@ class AppointmentController extends AbstractController
 
         if (!empty($data['startDate']) && !empty($data['endDate'])) {
             try {
-                $start = new \DateTimeImmutable($data['startDate']);
-                $end   = new \DateTimeImmutable($data['endDate']);
+                $start = new DateTimeImmutable($data['startDate']);
+                $end   = new DateTimeImmutable($data['endDate']);
                 if ($start >= $end) {
                     return $this->json(['status' => false, 'message' => 'Dates invalides'], 400);
                 }
-                $appointment->setStartTime(\DateTime::createFromImmutable($start));
-                $appointment->setEndTime(\DateTime::createFromImmutable($end));
-            } catch (\Exception) {
+                $appointment->setStartTime(DateTime::createFromImmutable($start));
+                $appointment->setEndTime(DateTime::createFromImmutable($end));
+            } catch (Exception) {
                 return $this->json(['status' => false, 'message' => 'Format de date invalide'], 400);
             }
         }
@@ -199,9 +203,9 @@ class AppointmentController extends AbstractController
         }
 
         try {
-            $dateStart = new \DateTimeImmutable($startDate);
-            $dateEnd   = new \DateTimeImmutable($endDate);
-        } catch (\Exception) {
+            $dateStart = new DateTimeImmutable($startDate);
+            $dateEnd   = new DateTimeImmutable($endDate);
+        } catch (Exception) {
             return $this->json(['status' => false, 'message' => 'Format de date invalide. Utilisez le format Y-m-d (ex: 2026-05-01).'], 400);
         }
 
@@ -282,9 +286,9 @@ class AppointmentController extends AbstractController
         }
 
         try {
-            $start = new \DateTimeImmutable($startDate);
-            $end   = new \DateTimeImmutable($endDate);
-        } catch (\Exception) {
+            $start = new DateTimeImmutable($startDate);
+            $end   = new DateTimeImmutable($endDate);
+        } catch (Exception) {
             return $this->json(['status' => false, 'message' => 'Requete invalide.'], 400);
         }
 
@@ -314,7 +318,7 @@ class AppointmentController extends AbstractController
             }
         }
 
-        $dateOnly  = new \DateTimeImmutable($start->format('Y-m-d'));
+        $dateOnly  = new DateTimeImmutable($start->format('Y-m-d'));
         $available = $appointmentsHelper->getSlotsByDates($doctor, $businessSite, $dateOnly, true);
 
         $isAvailable = false;
@@ -334,8 +338,8 @@ class AppointmentController extends AbstractController
         $appointment->setPatient($patient);
         $appointment->setBusinessSite($businessSite);
         $appointment->setNotes($notes);
-        $appointment->setStartTime(\DateTime::createFromImmutable($start));
-        $appointment->setEndTime(\DateTime::createFromImmutable($end));
+        $appointment->setStartTime(DateTime::createFromImmutable($start));
+        $appointment->setEndTime(DateTime::createFromImmutable($end));
         $appointment->setStatus('scheduled');
 
         $entityManager->persist($appointment);

@@ -2,6 +2,9 @@
 
 namespace App\Entity;
 
+use DateTime;
+use DateTimeInterface;
+
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -32,14 +35,14 @@ class Messages
     private string $content;
 
     #[ORM\Column(type: 'datetime')]
-    private \DateTimeInterface $sentAt;
+    private DateTimeInterface $sentAt;
 
     #[ORM\Column(type: 'boolean')]
     private bool $isRead = false;
 
     public function __construct()
     {
-        $this->sentAt = new \DateTime();
+        $this->sentAt = new DateTime();
     }
 
     // -------------------- Getters & Setters --------------------
@@ -93,12 +96,12 @@ class Messages
         return $this;
     }
 
-    public function getSentAt(): \DateTimeInterface
+    public function getSentAt(): DateTimeInterface
     {
         return $this->sentAt;
     }
 
-    public function setSentAt(\DateTimeInterface $sentAt): self
+    public function setSentAt(DateTimeInterface $sentAt): self
     {
         $this->sentAt = $sentAt;
         return $this;

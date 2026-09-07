@@ -4,6 +4,7 @@ namespace App\Service\Helper;
 
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Exception;
 
 class FileUploadHelper
 {
@@ -25,11 +26,11 @@ class FileUploadHelper
         $conn = \ftp_connect($this->host);
 
         if (!$conn) {
-            throw new \Exception("Connexion FTP échouée");
+            throw new Exception("Connexion FTP échouée");
         }
 
         if (!\ftp_login($conn, $this->user, $this->pass)) {
-            throw new \Exception("Login FTP échoué");
+            throw new Exception("Login FTP échoué");
         }
 
         \ftp_pasv($conn, true);
@@ -50,7 +51,7 @@ class FileUploadHelper
 
             if (!@ftp_chdir($conn, $currentPath)) {
                 if (!\ftp_mkdir($conn, $currentPath)) {
-                    throw new \Exception("Impossible de créer le dossier FTP: $currentPath");
+                    throw new Exception("Impossible de créer le dossier FTP: $currentPath");
                 }
             }
         }
@@ -64,19 +65,19 @@ class FileUploadHelper
     ): string {
 
         if (!$file) {
-            throw new \Exception('Aucun fichier fourni');
+            throw new Exception('Aucun fichier fourni');
         }
 
         if ($file->getSize() > 2 * 1024 * 1024) {
-            throw new \Exception('Fichier trop volumineux (max 2MB)');
+            throw new Exception('Fichier trop volumineux (max 2MB)');
         }
 
         if (!in_array($file->getMimeType(), $allowedMimeTypes)) {
-            throw new \Exception('Type de fichier non autorisé');
+            throw new Exception('Type de fichier non autorisé');
         }
 
         if ($checkImage && @getimagesize($file->getPathname()) === false) {
-            throw new \Exception('Fichier invalide');
+            throw new Exception('Fichier invalide');
         }
 
         $subDir = trim($subDir, '/');
@@ -96,14 +97,14 @@ class FileUploadHelper
         $tempPath = $file->getPathname();
 
         if (!file_exists($tempPath)) {
-            throw new \Exception("Fichier temporaire introuvable: " . $tempPath);
+            throw new Exception("Fichier temporaire introuvable: " . $tempPath);
         }
 
         $uploadPath = $remotePath . '/' . $filename;
 
         if (!\ftp_put($conn, $uploadPath, $tempPath, FTP_BINARY)) {
             \ftp_close($conn);
-            throw new \Exception("Upload FTP échoué vers: " . $uploadPath);
+            throw new Exception("Upload FTP échoué vers: " . $uploadPath);
         }
 
         \ftp_close($conn);
@@ -115,7 +116,7 @@ class FileUploadHelper
     {
         $relativePath = ltrim($relativePath, '/');
         if (str_contains($relativePath, '..')) {
-            throw new \Exception('Path traversal détecté');
+            throw new Exception('Path traversal détecté');
         }
 
         $conn = $this->connect();
@@ -126,14 +127,14 @@ class FileUploadHelper
         if ($fileSize === -1) {
             ftp_close($conn);
             // throw error peut causé des problemes si un mouvement ftp ou aprés une purge
-            //throw new \Exception("Fichier introuvable sur le FTP: $filePath");
+            //throw new Exception("Fichier introuvable sur le FTP: $filePath");
             return true;
         }
 
         // gestion du warning de ftp_delete si il retourne false
         if (!@ftp_delete($conn, $filePath)) {
             ftp_close($conn);
-            throw new \Exception("Échec de suppression FTP: $filePath");
+            throw new Exception("Échec de suppression FTP: $filePath");
         }
 
         ftp_close($conn);

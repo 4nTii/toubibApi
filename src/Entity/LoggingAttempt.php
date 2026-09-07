@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\LoggingAttemptRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: LoggingAttemptRepository::class)]
@@ -23,11 +24,11 @@ class LoggingAttempt
     private ?string $userAgent = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $attemptedAt = null;
+    private ?DateTimeImmutable $attemptedAt = null;
 
     public function __construct(?string $email, ?string $ipAddress, ?string $userAgent)
     {
-        $this->attemptedAt = new \DateTimeImmutable();
+        $this->attemptedAt = new DateTimeImmutable();
         $this->email = $email;
         $this->ipAddress = $ipAddress;
         $this->userAgent = $userAgent;
@@ -73,12 +74,12 @@ class LoggingAttempt
         return $this;
     }
 
-    public function getAttemptedAt(): ?\DateTimeImmutable
+    public function getAttemptedAt(): ?DateTimeImmutable
     {
         return $this->attemptedAt;
     }
 
-    public function setAttemptedAt(\DateTimeImmutable $attemptedAt): self
+    public function setAttemptedAt(DateTimeImmutable $attemptedAt): self
     {
         $this->attemptedAt = $attemptedAt;
         return $this;
