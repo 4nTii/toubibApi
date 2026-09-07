@@ -1,25 +1,19 @@
-.PHONY: all help build up down restart logs logs-app shell db-shell \
+.PHONY: all help build rebuild up down restart logs logs-app shell db-shell \
         redis-cli migrate migrate-diff db-fixtures fixtures cache-clear redis-clear \
-        jwt-keys jwt-keys-force composer-install composer-update \
+        jwt-keys jwt-keys-force composer-install composer-update env-local \
         setup db-init prod-up prod-deploy
 
+# Production compose invocation: base file only (no dev override), and pull in
+# .env.local on top of .env when it exists (secrets / real infrastructure).
+COMPOSE_PROD = docker compose -f docker-compose.yml $(if $(wildcard .env.local),--env-file .env --env-file .env.local,)
+
 ifeq ($(OS),Windows_NT)
-ENV_CHECK = powershell -NoProfile -ExecutionPolicy Bypass -Command "if (-not (Test-Path '.env')) { if (Test-Path '.env.example') { Copy-Item '.env.example' '.env'; Write-Host 'WARNING: .env created from .env.example -- edit .env and set your secrets before continuing' } else { Write-Host 'ERROR: No .env file found. Copy .env.example to .env and fill in your values.'; exit 1 } }"
 HELP_CMD = powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-Content '$(firstword $(MAKEFILE_LIST))' | Where-Object { $$_ -match '^[a-zA-Z_-]+:.*?\#\# ' } | ForEach-Object { $$parts = $$_ -split ':.*?\#\# ', 2; Write-Host ('{0,-22} {1}' -f $$parts[0], $$parts[1]) }"
 WAIT_FOR_DB = powershell -NoProfile -ExecutionPolicy Bypass -Command "while ($$true) { docker compose exec db mysqladmin ping -h localhost --silent 2>$$null; if ($$LASTEXITCODE -eq 0) { break }; Write-Host -NoNewline '.'; Start-Sleep -Seconds 2 }; Write-Host ' ready'"
 DB_SHELL_CMD = powershell -NoProfile -ExecutionPolicy Bypass -Command "$$u = if ($$env:DB_USER) { $$env:DB_USER } else { 'toubib_user' }; $$p = if ($$env:DB_PASSWORD) { $$env:DB_PASSWORD } else { 'toubib_password' }; $$d = if ($$env:DB_NAME) { $$env:DB_NAME } else { 'toubib' }; docker compose exec db mysql -u $$u ('-p' + $$p) $$d"
 REDIS_CLI_CMD = powershell -NoProfile -ExecutionPolicy Bypass -Command "$$p = if ($$env:REDIS_PASSWORD) { $$env:REDIS_PASSWORD } else { 'redis_password' }; docker compose exec redis redis-cli -a $$p"
 DB_FIXTURES_CMD = powershell -NoProfile -ExecutionPolicy Bypass -Command "$$u = if ($$env:DB_USER) { $$env:DB_USER } else { 'toubib_user' }; $$p = if ($$env:DB_PASSWORD) { $$env:DB_PASSWORD } else { 'toubib_password' }; $$d = if ($$env:DB_NAME) { $$env:DB_NAME } else { 'toubib' }; Get-Content -Raw 'docker/mysql/data-dev.sql' | docker compose exec -T db mysql -u $$u ('-p' + $$p) $$d"
 else
-ENV_CHECK = if [ ! -f .env ]; then \
-		if [ -f .env.example ]; then \
-			cp .env.example .env; \
-			echo "WARNING: .env created from .env.example -- edit .env and set your secrets before continuing"; \
-		else \
-			echo "ERROR: No .env file found. Copy .env.example to .env and fill in your values."; \
-			exit 1; \
-		fi \
-	fi
 HELP_CMD = grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
 WAIT_FOR_DB = until docker compose exec db mysqladmin ping -h localhost --silent 2>/dev/null; do \
@@ -33,8 +27,8 @@ endif
 
 # --- Default target: full install and start -----------------------------------
 
-all: ## Run everything: build -> up -> setup (migrate + jwt + cache)
-	@$(ENV_CHECK)
+all: ## Run everything: env -> build -> up -> setup (migrate + jwt + cache)
+	@$(MAKE) --no-print-directory env-local
 	@echo ""
 	@echo "--- Building Docker images --------------------------"
 	docker compose build --build-arg http_proxy="" --build-arg https_proxy="" --build-arg HTTP_PROXY="" --build-arg HTTPS_PROXY="" --build-arg NO_PROXY="*"
@@ -163,14 +157,26 @@ setup: ## Application setup: db-init + db-fixtures + jwt-keys + cache-clear
 	@$(MAKE) --no-print-directory cache-clear
 	@echo "Setup complete"
 
-# --- Production ---------------------------------------------------------------
+# --- Environment ------------------------------------------------------------
 
-prod-up: ## Start in production mode (no dev override)
-	docker compose -f docker-compose.yml up -d
+env-local: ## Create .env.local from .env.example if missing (run automatically by `make`)
+	@if [ -f .env.local ]; then \
+		echo ".env.local present -- keeping it"; \
+	else \
+		cp .env.example .env.local; \
+		echo ".env.local created from .env.example -- edit it for a real deployment (secrets, prod infra)"; \
+	fi
+
+# --- Production -------------------------------------------------------------
+# Builds the `prod` stage of the Dockerfile. Put real secrets in .env.local
+# (picked up automatically via COMPOSE_PROD).
+
+prod-up: ## Start in production mode (prod image, no dev override)
+	$(COMPOSE_PROD) up -d --build
 
 prod-deploy: ## Full deploy: build + migrate + cache warmup
-	docker compose -f docker-compose.yml build
-	docker compose -f docker-compose.yml up -d
-	docker compose -f docker-compose.yml exec app php bin/console doctrine:migrations:migrate --no-interaction
-	docker compose -f docker-compose.yml exec app php bin/console cache:warmup
+	$(COMPOSE_PROD) build
+	$(COMPOSE_PROD) up -d
+	$(COMPOSE_PROD) exec app php bin/console doctrine:migrations:migrate --no-interaction
+	$(COMPOSE_PROD) exec app php bin/console cache:warmup
 	@echo "Deployment complete"

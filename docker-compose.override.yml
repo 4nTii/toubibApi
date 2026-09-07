@@ -1,9 +1,10 @@
+# Development overrides — loaded automatically by `docker compose`.
+# Builds the `dev` stage of the Dockerfile and mounts the source tree.
 services:
 
   app:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      target: dev
       args:
         http_proxy: ""
         https_proxy: ""
@@ -28,7 +29,7 @@ services:
       - "9003:9003"
 
   nginx:
-    ports:
+    ports: !override
       - "8000:443"
     volumes:
       - ./docker/nginx/dev.conf:/etc/nginx/conf.d/default.conf:ro

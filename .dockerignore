@@ -1,0 +1,40 @@
+# Version control / IDE
+.git
+.gitignore
+.gitattributes
+.editorconfig
+.idea
+.vscode
+
+# Build artefacts & local runtime state (regenerated inside the image)
+/vendor/
+/var/
+/node_modules/
+/public/bundles/
+/public/assets/
+
+# Local environment overrides & secrets — never bake these into an image
+.env.local
+.env.*.local
+.env.local.php
+
+# JWT keys — mounted as a volume at runtime, must not be in the image
+/config/jwt/
+
+# Nginx assets — used by the nginx container via bind mount, not by PHP
+/docker/nginx/
+
+# Docker / tooling / docs
+Dockerfile
+.dockerignore
+docker-compose*.yml
+Makefile
+README*.md
+CLAUDE*.md
+LICENSE
+
+# Tests
+/tests/
+phpunit.dist.xml
+.phpunit.result.cache
+.phpunit.cache

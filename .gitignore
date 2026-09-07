@@ -40,9 +40,10 @@
 # Embedded web-server pid file
 /.web-server-pid
 
-# Environment — only .env.example is committed
-.env
-.env.*
-!.env.example
+# Environment — .env, .env.dev and .env.example are committed (they hold no secrets)
+# Real secrets and machine/deploy-specific values go in .env.local (never committed)
+/.env.local
+/.env.*.local
+/.env.local.php
 docker/certs/
 config/jwt/
