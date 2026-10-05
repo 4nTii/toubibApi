@@ -52,7 +52,7 @@ class DoctorsController extends AbstractController
         $doctor = $doctorsRepository->findOneBy(['user' => $user]);
 
         if (!$doctor) {
-            return $this->json(['status' => false, 'message' => 'Cet utilisateur ne correspond pas à un médecin'], 200);
+            return $this->json(['status' => false, 'message' => 'Cet utilisateur ne correspond pas à un médecin'], 403);
         }
 
         $ftpTarget = $this->getParameter('vite_ftp_target');
